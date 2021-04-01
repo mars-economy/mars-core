@@ -42,7 +42,7 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
 
     function addOutcome(bytes32 _outcome) external onlyOwner {
         outcomes.push(_outcome);
-        address newToken = address(new ERC20(1000000000000000000000000000, string(abi.encodePacked(_outcome)), 18, "TST"));
+        address newToken = address(new ERC20(1_000_000_000_000_000_000_000_000_000, string(abi.encodePacked(_outcome)), 18, "TST"));
         outcomeTokens.push(newToken);
         tokenOutcomeAddress[_outcome] = newToken;
     }
