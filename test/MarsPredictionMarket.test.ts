@@ -143,7 +143,7 @@ describe("Prediction Market", async () => {
       await getRewards(users)
 
       //checking reward after getReward()
-      // await checkBalances(users, [10500, 11500, 9000, 9000])
+      await checkBalances(users, [10500, 11500, 9000, 9000])
     })
 
     it("Should revert if user tries to predict after timeout", async () => {

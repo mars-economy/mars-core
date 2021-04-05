@@ -4,3 +4,4 @@ artifacts
 cache
 wallet.ts
 .idea
+.vscode
