@@ -12,6 +12,8 @@ import "./libraries/ProposalLogic.sol";
 
 import "./dependencies/tokens/IERC20.sol";
 
+import "hardhat/console.sol"; //TODO: REMOVE
+
 contract MarsGovernance is IMarsGovernance {
     using ProposalLogic for Proposal;
     event ProposalVoted(address user, ProposalTypes.Vote _vote, uint256 influence);
@@ -27,10 +29,11 @@ contract MarsGovernance is IMarsGovernance {
     IERC20 govToken;
     Settlement settlement;
 
-    mapping(address => Proposal) proposal;
-    mapping(address => ProposalTypes.CreateMarketProposal) createMarketProposal;
-    mapping(address => ProposalTypes.AddOracleProposal) addOracleProposal;
-    mapping(address => ProposalTypes.ChangeOutcomeProposal) changeOutcomeProposal;
+    mapping(address => Proposal) internal proposal;
+    mapping(address => ProposalTypes.CreateMarketProposal) internal createMarketProposal;
+    mapping(address => ProposalTypes.AddOracleProposal) internal addOracleProposal;
+    mapping(address => ProposalTypes.ChangeOutcomeProposal) internal changeOutcomeProposal;
+    mapping(address => ProposalTypes.RemoveOracleProposal) internal removeOracleProposal;
 
     uint256 votingPeriod = 48 hours;
     uint256 quorum = 20; //percentage
@@ -41,6 +44,10 @@ contract MarsGovernance is IMarsGovernance {
     }
 
     function changeOutcome(address _predictionMarket, bytes32[] memory _outcomes) external override {
+        require(msg.sender == address(settlement), "ONLY SETTLEMENT CAN START THIS PROPOSAL");
+        require(createMarketProposal[_predictionMarket].votingEnd < block.timestamp, "VOTING PERIOD HASN'T FINISHED");
+        proposal[_predictionMarket].state.totalInfluence = 0; //renewing influence?
+
         Proposal storage prop = proposal[_predictionMarket];
         prop.state.started = block.timestamp;
 
@@ -48,71 +55,110 @@ contract MarsGovernance is IMarsGovernance {
         prop.proposalType = ProposalTypes.ProposalType.CHANGE_OUTCOME;
 
         changeOutcomeProposal[_predictionMarket].outcomes = _outcomes;
+        changeOutcomeProposal[_predictionMarket].outcomeInfluence = new uint256[](_outcomes.length);
     }
 
     function addOracle(address _newOracle) external override {
-        Proposal storage prop = proposal[_newOracle]; //open for discusion
+        Proposal storage prop = proposal[_newOracle];
+
+        require(prop.state.started == 0 || prop.proposalType == ProposalTypes.ProposalType.REMOVE_ORACLE, "ORACLE ALREADY ADDED");
+
         prop.state.started = block.timestamp;
 
-        //prop.result = ProposalTypes.ProposalState.IN_PROGRESS;
+        prop.result = ProposalTypes.ProposalStatus.IN_PROGRESS;
+
         prop.proposalType = ProposalTypes.ProposalType.ADD_ORACLE;
 
         addOracleProposal[_newOracle].newOracle = _newOracle;
     }
 
+    function removeOracle(address _oracle) external override {
+        Proposal storage prop = proposal[_oracle];
+
+        require(prop.proposalType == ProposalTypes.ProposalType.ADD_ORACLE, "ORACLE ALREADY DELETED OR NOT ADDED");
+
+        prop.state.started = block.timestamp;
+
+        prop.result = ProposalTypes.ProposalStatus.IN_PROGRESS;
+
+        prop.proposalType = ProposalTypes.ProposalType.REMOVE_ORACLE;
+        prop.state.approvalsInfluence = 0;
+        prop.state.againstInfluence = 0;
+        prop.state.abstainInfluence = 0;
+        prop.state.totalInfluence = 0;
+
+        addOracleProposal[_oracle].newOracle = _oracle;
+    }
+
     function createMarket(
         address _name,
         bytes32[] memory _outcomes,
-        address _purchaseToken
+        address _purchaseToken,
+        uint256 _votingEnd
     ) external override {
-        Proposal storage prop = proposal[_name]; //same...
+        Proposal storage prop = proposal[_name];
+
+        require(prop.state.started == 0, "NAME/ADDRESS ALREADY TAKEN");
+
         prop.state.started = block.timestamp;
 
         //prop.result = ProposalTypes.ProposalState.IN_PROGRESS;
         prop.proposalType = ProposalTypes.ProposalType.CREATE_MARKET;
 
+        createMarketProposal[_name].name = _name;
         createMarketProposal[_name].outcomes = _outcomes;
         createMarketProposal[_name].token = _purchaseToken;
+        createMarketProposal[_name].votingEnd = _votingEnd;
     }
 
-    function voteForOutcome(address _proposal, bytes32 _trueOutcome) external {
-        // for (uint i = 0; i < changeOutcome)
-    }
-
-    function vote(address _proposal, ProposalTypes.Vote _vote) external {
-        Proposal storage prop = proposal[_proposal];
-
+    function voteForOutcome(address _proposal, uint256 _index) external override {
+        require(proposal[_proposal].state.started != 0, "PROPOSAL HASN'T BEEN CREATED");
+        require(block.timestamp < proposal[_proposal].state.started + votingPeriod, "VOTING PERIOD HAS FINISHED");
+        require(_index < changeOutcomeProposal[_proposal].outcomes.length, "INVALID INDEX");
         uint256 influence = govToken.balanceOf(msg.sender);
         require(influence > 0, "NO GOV TOKENS IN ACCOUNT");
 
+        changeOutcomeProposal[_proposal].outcomeInfluence[_index] = changeOutcomeProposal[_proposal].outcomeInfluence[_index] + influence;
+
+        proposal[_proposal].state.totalInfluence += influence;
+    }
+
+    function vote(address _proposal, ProposalTypes.Vote _vote) external override {
+        require(proposal[_proposal].state.started != 0, "PROPOSAL HASN'T BEEN CREATED");
+        require(block.timestamp < proposal[_proposal].state.started + votingPeriod, "VOTING PERIOD HAS FINISHED");
+        uint256 influence = govToken.balanceOf(msg.sender);
+        require(influence > 0, "NO GOV TOKENS IN ACCOUNT");
+
+        Proposal storage prop = proposal[_proposal];
+
         if (_vote == ProposalTypes.Vote.YES) {
             if (prop.proposalType == ProposalTypes.ProposalType.CREATE_MARKET) {
-                proposal[_proposal].state.approvalsInfluence += influence;
+                prop.state.approvalsInfluence += influence;
             } else if (prop.proposalType == ProposalTypes.ProposalType.ADD_ORACLE) {
-                proposal[_proposal].state.approvalsInfluence += influence;
+                prop.state.approvalsInfluence += influence;
             }
         }
 
         if (_vote == ProposalTypes.Vote.NO) {
             if (prop.proposalType == ProposalTypes.ProposalType.CREATE_MARKET) {
-                proposal[_proposal].state.againstInfluence += influence;
+                prop.state.againstInfluence += influence;
             } else if (prop.proposalType == ProposalTypes.ProposalType.ADD_ORACLE) {
-                proposal[_proposal].state.againstInfluence += influence;
+                prop.state.againstInfluence += influence;
             }
         }
 
         if (_vote == ProposalTypes.Vote.ABSTAIN) {
             if (prop.proposalType == ProposalTypes.ProposalType.CREATE_MARKET) {
-                proposal[_proposal].state.abstainInfluence += influence;
+                prop.state.abstainInfluence += influence;
             } else if (prop.proposalType == ProposalTypes.ProposalType.ADD_ORACLE) {
-                proposal[_proposal].state.abstainInfluence += influence;
+                prop.state.abstainInfluence += influence;
             }
         }
 
-        proposal[_proposal].state.totalInfluence += influence;
+        prop.state.totalInfluence += influence;
     }
 
-    function finishVote(address _proposal) external {
+    function finishVote(address _proposal) external override {
         Proposal storage prop = proposal[_proposal];
 
         require(block.timestamp > prop.state.started + votingPeriod, "VOTING PERIOD HASN'T ENDED");
@@ -131,12 +177,25 @@ contract MarsGovernance is IMarsGovernance {
             ) {
                 prop.result = ProposalTypes.ProposalStatus.APPROVED;
 
+                // ((((((((((((((((()))))))))))))))))
                 IPredictionMarket market =
-                    IPredictionMarket(marsFactory.createMarket(createMarketProposal[_proposal].token, block.timestamp + 60 * 60 * 24 * 2));
+                    IPredictionMarket(
+                        marsFactory.createMarket(
+                            createMarketProposal[_proposal].token,
+                            createMarketProposal[_proposal].votingEnd,
+                            createMarketProposal[_proposal].name
+                        )
+                    );
 
-                // for (uint i = 0; i < createMarketProposal[_proposal].outcomes; i++){
-                //     market.
-                // }
+                for (uint256 i = 0; i < createMarketProposal[_proposal].outcomes.length; i++) {
+                    market.addOutcome(createMarketProposal[_proposal].outcomes[i]);
+                }
+
+                settlement.registerMarket(
+                    createMarketProposal[_proposal].name,
+                    createMarketProposal[_proposal].outcomes,
+                    createMarketProposal[_proposal].votingEnd
+                );
             } else {
                 prop.result = ProposalTypes.ProposalStatus.DECLINED;
             }
@@ -154,7 +213,27 @@ contract MarsGovernance is IMarsGovernance {
             ) {
                 prop.result = ProposalTypes.ProposalStatus.APPROVED;
 
+                // ((((((((((((((((()))))))))))))))))
                 settlement.addOracle(addOracleProposal[_proposal].newOracle);
+            } else {
+                prop.result = ProposalTypes.ProposalStatus.DECLINED;
+            }
+        } else if (prop.proposalType == ProposalTypes.ProposalType.REMOVE_ORACLE) {
+            if (
+                (prop.state.totalInfluence != 0) &&
+                ((100 * (prop.state.approvalsInfluence + prop.state.againstInfluence + prop.state.abstainInfluence)) /
+                    prop.state.totalInfluence <
+                    quorum)
+            ) {
+                prop.result = ProposalTypes.ProposalStatus.DECLINED;
+            } else if (
+                (prop.state.approvalsInfluence + prop.state.againstInfluence) != 0 &&
+                ((100 * prop.state.approvalsInfluence) / (prop.state.approvalsInfluence + prop.state.againstInfluence) > threshold)
+            ) {
+                prop.result = ProposalTypes.ProposalStatus.APPROVED;
+
+                // ((((((((((((((((()))))))))))))))))
+                settlement.removeOracle(removeOracleProposal[_proposal].oracle);
             } else {
                 prop.result = ProposalTypes.ProposalStatus.DECLINED;
             }
@@ -167,14 +246,20 @@ contract MarsGovernance is IMarsGovernance {
                     valueMax = changeOutcomeProposal[_proposal].outcomeInfluence[i];
                     indexMax = i;
                 }
+
+            settlement.setWinningOutcome(_proposal, changeOutcomeProposal[_proposal].outcomes[indexMax]);
         }
     }
 
-    function getProposalState(address _proposal) external view returns (ProposalTypes.ProposalState memory) {
+    function getProposalState(address _proposal) external view override returns (ProposalTypes.ProposalState memory) {
         return proposal[_proposal].state;
     }
 
-    function getProposalResult(address _proposal) external view returns (ProposalTypes.ProposalStatus) {
+    function getChangeOutcomeState(address _proposal) external view override returns (ProposalTypes.ChangeOutcomeProposal memory) {
+        return changeOutcomeProposal[_proposal];
+    }
+
+    function getProposalResult(address _proposal) external view override returns (ProposalTypes.ProposalStatus) {
         return proposal[_proposal].result;
     }
 
@@ -191,11 +276,11 @@ contract MarsGovernance is IMarsGovernance {
         return proposal[_proposal].state.started + votingPeriod;
     }
 
-    function setFactory(address _marsFactory) external {
+    function setFactory(address _marsFactory) external override {
         marsFactory = IPredictionMarketFactory(_marsFactory);
     }
 
-    function setSettlement(address _marsSettlement) external {
+    function setSettlement(address _marsSettlement) external override {
         settlement = Settlement(_marsSettlement);
     }
 }

@@ -15,10 +15,14 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory {
         addressResolver = _addressResolver;
     }
 
-    function createMarket(address token, uint256 timeout) external override returns (address) {
+    function createMarket(
+        address token,
+        uint256 timeout,
+        address name
+    ) external override returns (address) {
         // require(msg.sender == governer);
         require(timeout > block.timestamp, "MARS: Invalid prediction market timeout");
-        MarsPredictionMarket predictionMarket = new MarsPredictionMarket(token, timeout);
+        MarsPredictionMarket predictionMarket = new MarsPredictionMarket(token, timeout, name);
         predictionMarkets[address(predictionMarket)] = true;
         markets.push(address(predictionMarket));
         return address(predictionMarket);
@@ -30,9 +34,5 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory {
 
     function getMarkets() external view override returns (address[] memory) {
         return markets; //graphQL will translate this to name
-    }
-
-    function setOracle(address _predictionMarket, address _oracle) external override {
-        MarsPredictionMarket(_predictionMarket).setOracle(_oracle);
     }
 }

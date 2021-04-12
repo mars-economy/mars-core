@@ -5,10 +5,12 @@ import "./interfaces/IPredictionMarket.sol";
 import "./interfaces/IShareToken.sol";
 import "./dependencies/tokens/IERC20.sol";
 import "./dependencies/tokens/ERC20.sol";
+import "./Settlement.sol";
 import "./Owned.sol";
 
 contract MarsPredictionMarket is IPredictionMarket, Owned {
     mapping(uint256 => IShareToken) public shareTokens;
+    address name;
 
     bytes32[] public outcomes;
     //list of outcomes
@@ -28,33 +30,42 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
     //outcome => address of token
     uint256 totalPredicted;
     //sum from all predictors on all outcomes
+    mapping(address => bool) claimed;
 
-    address oracle;
-    address factory;
+    Settlement settlement;
 
-    constructor(address _token, uint256 _predictionTimeEnd) Owned(msg.sender) {
+    constructor(
+        address _token,
+        uint256 _predictionTimeEnd,
+        address _name
+    ) Owned(msg.sender) {
         predictionTimeEnd = _predictionTimeEnd;
         // predictionContractEnd // ADDME
         // predictionMarketBalancingStart // ADDME
+        name = _name;
 
         token = _token;
     }
 
-    function addOutcome(bytes32 _outcome) external onlyOwner {
+    function addOutcome(bytes32 _outcome) external override {
+        // require(msg.sender == governance, "ONLY GOVERNANCE CAN ADD OUTCOMES");
+
         outcomes.push(_outcome);
         address newToken = address(new ERC20(1_000_000_000_000_000_000_000_000_000, string(abi.encodePacked(_outcome)), 18, "TST"));
         outcomeTokens.push(newToken);
         tokenOutcomeAddress[_outcome] = newToken;
     }
 
-    function setWinningOutcome(bytes32 _outcome) external override {
-        require(msg.sender == oracle, "MARS: ONLY ORACLE CAN FINALIZE PREDICTION MARKET");
-
-        winningOutcome = _outcome;
+    function getWinningOutcome() internal returns (bytes32) {
+        return settlement.getWinningOutcome(name);
     }
 
-    function getReward() external {
-        require(winningOutcome != "", "MARS: PREDICTION IS NOT YET CONCLUDED");
+    function getReward() external override {
+        winningOutcome = getWinningOutcome();
+        // require(winningOutcome != "", "MARS: PREDICTION IS NOT YET CONCLUDED"); //obsolete?
+        require(claimed[msg.sender] == false, "USER ALREADY CLAIMED");
+
+        claimed[msg.sender] = true;
 
         uint256 reward = (userOutcomeTokens[msg.sender][winningOutcome] * totalPredicted) / outcomeBalance[winningOutcome];
         //amount of tokens the owner put on the winning outcome * amount of tokens put by all owners on all outcomes
@@ -110,7 +121,7 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
         return tokenOutcomeAddress[_outcome] == address(0);
     }
 
-    function setOracle(address _newOracle) external onlyOwner {
-        oracle = _newOracle;
+    function setSettlement(address _newSettlement) external override {
+        settlement = Settlement(_newSettlement);
     }
 }

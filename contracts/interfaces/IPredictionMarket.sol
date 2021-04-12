@@ -4,11 +4,11 @@ pragma solidity >=0.8.0 <0.9.0;
 interface IPredictionMarket {
     event Prediction(address account, bytes32 outcome);
 
-    function setWinningOutcome(bytes32 _outcome) external;
-
     function getNumberOfOutcomes() external view returns (uint256);
 
     function getPredictionTimeEnd() external view returns (uint256);
+
+    function addOutcome(bytes32 _outcome) external;
 
     function getBalancingTimeStart() external view returns (uint256);
 
@@ -17,4 +17,8 @@ interface IPredictionMarket {
     function userOutcomeBalance(bytes32 _outcome) external returns (uint256);
 
     function getTokens() external view returns (address[] memory);
+
+    function getReward() external;
+
+    function setSettlement(address _newSettlement) external;
 }

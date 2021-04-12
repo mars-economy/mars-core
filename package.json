@@ -13,10 +13,12 @@
     "prettier:check": "prettier --check 'contracts/**/*.sol'",
     "lint": "npx eslint --ext .js,.ts,.json --fix ./",
     "lint:check": "npx eslint --ext .js,.ts,.json ./",
-    "format": "yarn prettier && yarn lint"
+    "format": "yarn prettier && yarn lint",
+    "deploy": "npx hardhat run --network bsctestnet deploy/deploy.ts"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.1",
+    "@nomiclabs/hardhat-etherscan": "^2.1.1",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@typechain/ethers-v5": "^6.0.0",
     "@types/chai": "^4.2.15",

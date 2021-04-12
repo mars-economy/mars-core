@@ -1,8 +1,15 @@
 import { ethers } from "hardhat"
 import { expect } from "chai"
 import { Signer } from "ethers"
-import { bytes32, timeout, wait } from "./utils/utils"
-import { ERC20, ERC20__factory, MarsPredictionMarket, MarsPredictionMarket__factory, MarsPredictionMarketFactory } from "../typechain"
+import { bytes32, timeoutAppended, wait } from "./utils/utils"
+import {
+  ERC20,
+  ERC20__factory,
+  MarsPredictionMarket,
+  MarsPredictionMarket__factory,
+  MarsPredictionMarketFactory,
+  Settlement,
+} from "../typechain"
 
 describe("Prediction Market", async () => {
   let owner: Signer
@@ -19,7 +26,6 @@ describe("Prediction Market", async () => {
 
   before(async () => {
     ;[owner, oracle, ...users] = await ethers.getSigners()
-    predictionMarketTimeout = timeout(5)
   })
 
   beforeEach(async () => {
@@ -32,7 +38,10 @@ describe("Prediction Market", async () => {
       .connect(owner)
       .deploy(await owner.getAddress())) as MarsPredictionMarketFactory
 
-    await predictionMarketFactory.connect(owner).createMarket(token.address, predictionMarketTimeout)
+    predictionMarketTimeout = await timeoutAppended(ethers.provider, 15)
+    await predictionMarketFactory
+      .connect(owner)
+      .createMarket(token.address, predictionMarketTimeout, "0x2ee51F0bCC1ece7B94091e5E250b08e8276256D9")
 
     let newMarket = (await predictionMarketFactory.connect(owner).getMarkets())[0]
     predictionMarket = MarsPredictionMarket__factory.connect(newMarket, owner)
@@ -117,59 +126,5 @@ describe("Prediction Market", async () => {
       await token.connect(user).approve(predictionMarket.address, 1000)
       await expect(predictionMarket.connect(user).predict(UNKNOWN, 1000)).to.be.reverted
     })
-
-    it("Should win correct number of tokens", async () => {
-      let yesToken = ERC20__factory.connect((await predictionMarket.getTokens())[0], owner)
-
-      await approveAndPredict(users[0], YES, 1000)
-      await approveAndPredict(users[1], YES, 3000)
-      await approveAndPredict(users[2], NO, 1000)
-      await approveAndPredict(users[3], NO, 1000)
-
-      //checking require statements
-      await expect(predictionMarket.connect(users[0]).getReward()).to.be.revertedWith("PREDICTION IS NOT YET CONCLUDED")
-      await expect(predictionMarket.connect(users[0]).setWinningOutcome(YES)).to.be.revertedWith(
-        "ONLY ORACLE CAN FINALIZE PREDICTION MARKET"
-      )
-      await predictionMarketFactory.connect(owner).setOracle(predictionMarket.address, await oracle.getAddress())
-      await expect(predictionMarket.connect(oracle).setWinningOutcome(YES)).to.be.not.reverted
-
-      await yesToken.connect(users[0]).approve(predictionMarket.address, 1000)
-      await yesToken.connect(users[1]).approve(predictionMarket.address, 3000)
-
-      //checking balances before getReward()
-      await checkBalances(users, [9000, 7000, 9000, 9000])
-
-      await getRewards(users)
-
-      //checking reward after getReward()
-      await checkBalances(users, [10500, 11500, 9000, 9000])
-    })
-
-    it("Should revert if user tries to predict after timeout", async () => {
-      await token.connect(users[0]).approve(predictionMarket.address, 1000)
-
-      //waiting for 6 days
-      await wait(ethers, 60 * 60 * 24 * 6)
-
-      await expect(predictionMarket.connect(users[0]).predict(YES, 1000)).to.be.reverted
-    })
   })
-
-  const approveAndPredict = async (user: Signer, outcome: string, amount: number) => {
-    await token.connect(user).approve(predictionMarket.address, amount)
-    await predictionMarket.connect(user).predict(outcome, amount)
-  }
-
-  const getRewards = async (users: Signer[]) => {
-    for (let user of users) {
-      await predictionMarket.connect(user).getReward()
-    }
-  }
-
-  const checkBalances = async (users: Signer[], amounts: number[]) => {
-    for (let i = 0; i < amounts.length; i++) {
-      expect(await token.balanceOf(await users[i].getAddress())).to.be.equal(amounts[i])
-    }
-  }
 })

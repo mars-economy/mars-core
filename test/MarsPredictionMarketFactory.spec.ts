@@ -2,7 +2,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai"
 import { Signer } from "ethers"
 import { deployMars, Mars } from "./utils/mars"
-import { bytes32, timeout } from "./utils/utils"
+import { bytes32, timeoutAppended } from "./utils/utils"
 
 describe("Prediction Market Factory", async () => {
   let owner: Signer
@@ -22,7 +22,11 @@ describe("Prediction Market Factory", async () => {
   })
 
   it("Should create prediction market", async () => {
-    const tx = mars.predictionMarketFactory.createMarket(mars.marsToken.address, timeout(5))
+    const tx = mars.predictionMarketFactory.createMarket(
+      mars.marsToken.address,
+      await timeoutAppended(ethers.provider, 5),
+      "0x2ee51F0bCC1ece7B94091e5E250b08e8276256D9"
+    )
     await expect(tx).not.to.be.reverted
   })
 })
