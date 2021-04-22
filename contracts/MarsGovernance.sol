@@ -43,7 +43,7 @@ contract MarsGovernance is IMarsGovernance {
         govToken = IERC20(_govToken);
     }
 
-    function changeOutcome(address _predictionMarket, bytes32[] memory _outcomes) external override {
+    function changeOutcome(address _predictionMarket, bytes16[] memory _outcomes) external override {
         require(msg.sender == address(settlement), "ONLY SETTLEMENT CAN START THIS PROPOSAL");
         require(createMarketProposal[_predictionMarket].votingEnd < block.timestamp, "VOTING PERIOD HASN'T FINISHED");
         proposal[_predictionMarket].state.totalInfluence = 0; //renewing influence?
@@ -91,12 +91,16 @@ contract MarsGovernance is IMarsGovernance {
     }
 
     function createMarket(
-        address _name,
-        bytes32[] memory _outcomes,
+		address _proposalUuid,
+		bytes16 _milestoneUuid,
+		uint8 _position,
+		string memory _name,
+		string memory _description,
+        bytes16[] memory _outcomes,
         address _purchaseToken,
         uint256 _votingEnd
     ) external override {
-        Proposal storage prop = proposal[_name];
+        Proposal storage prop = proposal[_proposalUuid];
 
         require(prop.state.started == 0, "NAME/ADDRESS ALREADY TAKEN");
 
@@ -105,10 +109,13 @@ contract MarsGovernance is IMarsGovernance {
         //prop.result = ProposalTypes.ProposalState.IN_PROGRESS;
         prop.proposalType = ProposalTypes.ProposalType.CREATE_MARKET;
 
-        createMarketProposal[_name].name = _name;
-        createMarketProposal[_name].outcomes = _outcomes;
-        createMarketProposal[_name].token = _purchaseToken;
-        createMarketProposal[_name].votingEnd = _votingEnd;
+        createMarketProposal[_proposalUuid].milestoneUuid = _milestoneUuid;
+        createMarketProposal[_proposalUuid].position = _position;
+        createMarketProposal[_proposalUuid].name = _name;
+        createMarketProposal[_proposalUuid].description = _description;
+        createMarketProposal[_proposalUuid].outcomes = _outcomes;
+        createMarketProposal[_proposalUuid].token = _purchaseToken;
+        createMarketProposal[_proposalUuid].votingEnd = _votingEnd;
     }
 
     function voteForOutcome(address _proposal, uint256 _index) external override {
@@ -181,18 +188,22 @@ contract MarsGovernance is IMarsGovernance {
                 IPredictionMarket market =
                     IPredictionMarket(
                         marsFactory.createMarket(
-                            createMarketProposal[_proposal].token,
-                            createMarketProposal[_proposal].votingEnd,
-                            createMarketProposal[_proposal].name
+							createMarketProposal[_proposal].milestoneUuid,
+							createMarketProposal[_proposal].position,
+							createMarketProposal[_proposal].name,
+							createMarketProposal[_proposal].description,
+							createMarketProposal[_proposal].token,
+                            createMarketProposal[_proposal].votingEnd
                         )
                     );
 
                 for (uint256 i = 0; i < createMarketProposal[_proposal].outcomes.length; i++) {
-                    market.addOutcome(createMarketProposal[_proposal].outcomes[i]);
+					// TODO: change to real outcome params and invoke via factory
+                    market.addOutcome(createMarketProposal[_proposal].outcomes[i], 1, '');
                 }
 
                 settlement.registerMarket(
-                    createMarketProposal[_proposal].name,
+                    address(market),
                     createMarketProposal[_proposal].outcomes,
                     createMarketProposal[_proposal].votingEnd
                 );

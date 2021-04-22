@@ -4,7 +4,7 @@ pragma solidity >=0.8.0 <0.9.0;
 interface ISettlement {
     function registerMarket(
         address _predictionMarket,
-        bytes32[] memory _outcomes,
+        bytes16[] memory _outcomes,
         uint256 _votingEnd
     ) external;
 
@@ -14,7 +14,7 @@ interface ISettlement {
 
     function acceptAndStake() external;
 
-    function voteWinningOutcome(address _predictionMarket, bytes32 _outcome) external;
+    function voteWinningOutcome(address _predictionMarket, bytes16 _outcome) external;
 
     function openDispute(address _predictionMarket) external;
 
@@ -22,9 +22,9 @@ interface ISettlement {
 
     function withdraw() external;
 
-    // function setWinningOutcome(address _predictionMarket, bytes32 _outcome) public;
+    // function setWinningOutcome(address _predictionMarket, bytes16 _outcome) public;
 
-    function getWinningOutcome(address _predictionMarket) external returns (bytes32);
+    function getWinningOutcome(address _predictionMarket) external returns (bytes16);
 
     function getOracles() external view returns (address[] memory);
 }

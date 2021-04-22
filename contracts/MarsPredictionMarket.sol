@@ -10,9 +10,8 @@ import "./Owned.sol";
 
 contract MarsPredictionMarket is IPredictionMarket, Owned {
     mapping(uint256 => IShareToken) public shareTokens;
-    address name;
 
-    bytes32[] public outcomes;
+    bytes16[] public outcomes;
     //list of outcomes
     address[] public outcomeTokens;
     //list of tokens
@@ -20,13 +19,13 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
     uint256 public immutable predictionTimeEnd; //when buying stops
     uint256 public predictionMarketBalancingStart; //when 80:20 balancing beings, not yet implemented, should be immutable
     address public immutable token; //DAI or some other stable ERC20 token used to buy shares for outcomes
-    bytes32 public winningOutcome;
+    bytes16 public winningOutcome;
 
-    mapping(address => mapping(bytes32 => uint256)) userOutcomeTokens;
+    mapping(address => mapping(bytes16 => uint256)) userOutcomeTokens;
     //user => (outcomes => tokensBought)
-    mapping(bytes32 => uint256) public outcomeBalance;
+    mapping(bytes16 => uint256) public outcomeBalance;
     //outcome => totalTokensSold
-    mapping(bytes32 => address) public tokenOutcomeAddress;
+    mapping(bytes16 => address) public tokenOutcomeAddress;
     //outcome => address of token
     uint256 totalPredicted;
     //sum from all predictors on all outcomes
@@ -36,28 +35,28 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
 
     constructor(
         address _token,
-        uint256 _predictionTimeEnd,
-        address _name
+        uint256 _predictionTimeEnd
     ) Owned(msg.sender) {
         predictionTimeEnd = _predictionTimeEnd;
         // predictionContractEnd // ADDME
         // predictionMarketBalancingStart // ADDME
-        name = _name;
 
         token = _token;
     }
 
-    function addOutcome(bytes32 _outcome) external override {
-        // require(msg.sender == governance, "ONLY GOVERNANCE CAN ADD OUTCOMES");
-
-        outcomes.push(_outcome);
-        address newToken = address(new ERC20(1_000_000_000_000_000_000_000_000_000, string(abi.encodePacked(_outcome)), 18, "TST"));
+    function addOutcome(
+		bytes16 uuid, 
+		uint8 position, 
+		string memory name
+	) external override onlyOwner {
+        outcomes.push(uuid);
+        address newToken = address(new ERC20(1_000_000_000_000_000_000_000_000_000, string(abi.encodePacked(uuid)), 18, "MPO"));
         outcomeTokens.push(newToken);
-        tokenOutcomeAddress[_outcome] = newToken;
+        tokenOutcomeAddress[uuid] = newToken;
     }
 
-    function getWinningOutcome() internal returns (bytes32) {
-        return settlement.getWinningOutcome(name);
+    function getWinningOutcome() internal returns (bytes16) {
+        return settlement.getWinningOutcome(address(this));
     }
 
     function getReward() external override {
@@ -91,7 +90,7 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
         return predictionMarketBalancingStart;
     }
 
-    function predict(bytes32 _outcome, uint256 _amount) external override outcomeDefined(_outcome) {
+    function predict(bytes16 _outcome, uint256 _amount) external override outcomeDefined(_outcome) {
         require(block.timestamp < predictionTimeEnd, "MARS: PREDICTION TIME HAS PASSED");
 
         emit Prediction(msg.sender, _outcome);
@@ -104,7 +103,7 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
         totalPredicted += _amount;
     }
 
-    function userOutcomeBalance(bytes32 _outcome) external view override returns (uint256) {
+    function userOutcomeBalance(bytes16 _outcome) external view override returns (uint256) {
         return userOutcomeTokens[msg.sender][_outcome];
     }
 
@@ -112,12 +111,12 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
         return outcomeTokens;
     }
 
-    modifier outcomeDefined(bytes32 _outcome) {
+    modifier outcomeDefined(bytes16 _outcome) {
         require(!_outcomeDefined(_outcome), "MARS: OUTCOME NOT DEFINED");
         _;
     }
 
-    function _outcomeDefined(bytes32 _outcome) internal view returns (bool) {
+    function _outcomeDefined(bytes16 _outcome) internal view returns (bool) {
         return tokenOutcomeAddress[_outcome] == address(0);
     }
 

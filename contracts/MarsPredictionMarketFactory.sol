@@ -6,33 +6,114 @@ import "./interfaces/IAddressResolver.sol";
 import "./MarsPredictionMarket.sol";
 
 contract MarsPredictionMarketFactory is IPredictionMarketFactory {
+
+	struct Category {
+		uint8 position;
+		string name;
+		string description;
+	}
+
+	struct Milestone {
+		bytes16 categoryUuid;
+		uint8 position;
+		string name;
+		string description;
+		MilestoneStatus status;
+	}
+
+	struct PredictionMarket {
+		bytes16 milestoneUuid;
+		uint8 position;
+		string name;
+		string description;
+	}
+
+	mapping(bytes16 => Category) public categories;
+	mapping(bytes16 => Milestone) public milestones;
+    mapping(address => PredictionMarket) public predictionMarkets;
+	
     address public immutable addressResolver;
-    mapping(address => bool) public predictionMarkets;
-    address[] markets;
     address governer;
 
     constructor(address _addressResolver) {
         addressResolver = _addressResolver;
     }
+	
+	function updateCategory(
+        bytes16 uuid,
+		uint8 position,
+		string memory name,
+		string memory description
+    ) external override {
+        // require(msg.sender == governer);
+		
+		Category memory category;
+		category.position = position;
+		category.name = name;
+		category.description = description;
+		
+		categories[uuid] = category;
+
+		emit CategoryUpdatedEvent(uuid, position, name, description);
+    }
+
+	function updateMilestone(
+        bytes16 uuid,
+		bytes16 categoryUuid,
+		uint8 position,
+		string memory name,
+		string memory description,
+		MilestoneStatus status
+    ) external override {
+        // require(msg.sender == governer);
+		
+		Milestone memory milestone;
+		milestone.categoryUuid = categoryUuid;
+		milestone.position = position;
+		milestone.name = name;
+		milestone.description = description;
+		milestone.status = status;
+		
+		milestones[uuid] = milestone;
+
+		emit MilestoneUpdatedEvent(uuid, categoryUuid, position, name, description, status);
+    }
 
     function createMarket(
+		bytes16 milestoneUuid,
+		uint8 position,
+		string memory name,
+		string memory description,
         address token,
-        uint256 timeout,
-        address name
+        uint256 dueDate
     ) external override returns (address) {
         // require(msg.sender == governer);
-        require(timeout > block.timestamp, "MARS: Invalid prediction market timeout");
-        MarsPredictionMarket predictionMarket = new MarsPredictionMarket(token, timeout, name);
-        predictionMarkets[address(predictionMarket)] = true;
-        markets.push(address(predictionMarket));
+        require(dueDate > block.timestamp, "MARS: Invalid prediction market due date");
+        MarsPredictionMarket predictionMarket = new MarsPredictionMarket(token, dueDate);
+
+		PredictionMarket memory market;
+		market.milestoneUuid = milestoneUuid;
+		market.position = position;
+		market.name = name;
+		market.description = description;
+
+        predictionMarkets[address(predictionMarket)] = market;
+
+		emit PredictionMarketCreatedEvent(milestoneUuid, position, name, description, token, dueDate, 
+				address(predictionMarket));
+		
         return address(predictionMarket);
     }
 
-    function addOutcome(address _predictionMarket, bytes32 _outcome) external override {
-        MarsPredictionMarket(_predictionMarket).addOutcome(_outcome);
+    function addOutcome(
+		address predictionMarket, 
+		bytes16 uuid, 
+		uint8 position, 
+		string memory name
+	) external override {
+        // require(msg.sender == governer);
+        MarsPredictionMarket(predictionMarket).addOutcome(uuid, position, name);
+		emit OutcomeChangedEvent(uuid, predictionMarket, position, name);
     }
 
-    function getMarkets() external view override returns (address[] memory) {
-        return markets; //graphQL will translate this to name
-    }
 }

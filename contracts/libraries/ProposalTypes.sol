@@ -14,8 +14,11 @@ library ProposalTypes {
     }
 
     struct CreateMarketProposal {
-        address name; //or hash
-        bytes32[] outcomes; //outcome1, outcome2, outcome3
+		bytes16 milestoneUuid;
+		uint8 position;
+		string name;
+		string description;
+        bytes16[] outcomes; //outcome1, outcome2, outcome3
         address token;
         uint256 votingEnd;
         address newAddress;
@@ -30,7 +33,7 @@ library ProposalTypes {
     }
 
     struct ChangeOutcomeProposal {
-        bytes32[] outcomes; //outcome1, outcome2, outcome3
+        bytes16[] outcomes; //outcome1, outcome2, outcome3
         uint256[] outcomeInfluence; //100,    , 200     , 50 //also possible to change to mapping?
     }
 }

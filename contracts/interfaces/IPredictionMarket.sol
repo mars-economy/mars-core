@@ -8,13 +8,17 @@ interface IPredictionMarket {
 
     function getPredictionTimeEnd() external view returns (uint256);
 
-    function addOutcome(bytes32 _outcome) external;
+    function addOutcome(
+		bytes16 uuid, 
+		uint8 position, 
+		string memory name
+	) external;
 
     function getBalancingTimeStart() external view returns (uint256);
 
-    function predict(bytes32 _outcome, uint256 _amount) external;
+    function predict(bytes16 _outcome, uint256 _amount) external;
 
-    function userOutcomeBalance(bytes32 _outcome) external returns (uint256);
+    function userOutcomeBalance(bytes16 _outcome) external returns (uint256);
 
     function getTokens() external view returns (address[] memory);
 

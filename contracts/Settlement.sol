@@ -10,7 +10,7 @@ import "hardhat/console.sol"; //TODO: REMOVE
 contract Settlement is ISettlement {
     event PotentialOracle(address _newOracle);
     event OracleAccepted(address _newOracle, uint256 _sum);
-    event OracleVoted(address _oracle, address _predictionMarket, bytes32 _outcome);
+    event OracleVoted(address _oracle, address _predictionMarket, bytes16 _outcome);
 
     mapping(address => uint256) public staked; //how much a oracle has staked,
     //uint = 1 -> added and not staked,
@@ -18,15 +18,15 @@ contract Settlement is ISettlement {
     //uint == 0 -> not added
 
     struct MarketStatus {
-        bytes32[] outcomes;
+        bytes16[] outcomes;
         uint256 votingEnd;
         uint256 oraclesVoted;
-        bytes32 winningOutcome;
+        bytes16 winningOutcome;
         bool finalized;
     }
 
-    // mapping(address => mapping(address => mapping(bytes32=>uint))) oracleOutcome;
-    mapping(address => mapping(address => bytes32)) public oracleOutcome;
+    // mapping(address => mapping(address => mapping(bytes16=>uint))) oracleOutcome;
+    mapping(address => mapping(address => bytes16)) public oracleOutcome;
     //oracle => prediction => outcome
     mapping(address => MarketStatus) public marketStatus;
 
@@ -47,7 +47,7 @@ contract Settlement is ISettlement {
 
     function registerMarket(
         address _predictionMarket,
-        bytes32[] memory _outcomes,
+        bytes16[] memory _outcomes,
         uint256 _votingEnd
     ) external override {
         require(msg.sender == governance, "ONLY GOVERNANCE CAN REGISTER MARKETS");
@@ -95,7 +95,7 @@ contract Settlement is ISettlement {
         emit OracleAccepted(msg.sender, oracleAcceptanceAmount);
     }
 
-    function voteWinningOutcome(address _predictionMarket, bytes32 _outcome) external override {
+    function voteWinningOutcome(address _predictionMarket, bytes16 _outcome) external override {
         require(staked[msg.sender] > 1, "YOU SHALL NOT VOTE, until you stake 1 mil tokens");
         require(block.timestamp < marketStatus[_predictionMarket].votingEnd, "VOTING PERIOD HAS ENDED");
 
@@ -139,7 +139,7 @@ contract Settlement is ISettlement {
         for (uint256 i = 1; i < oracles.length; i++) {
             if (
                 oracleOutcome[oracles[i - 1]][_predictionMarket] != oracleOutcome[oracles[i]][_predictionMarket] &&
-                oracleOutcome[oracles[i]][_predictionMarket] != bytes32(0)
+                oracleOutcome[oracles[i]][_predictionMarket] != bytes16(0)
             ) {
                 return false;
             }
@@ -147,7 +147,7 @@ contract Settlement is ISettlement {
         return true;
     }
 
-    function punishOracles(address _predictionMarket, bytes32 _trueOutcome) internal {
+    function punishOracles(address _predictionMarket, bytes16 _trueOutcome) internal {
         for (uint256 i = 0; i < oracles.length; i++)
             if (oracleOutcome[oracles[i]][_predictionMarket] != marketStatus[_predictionMarket].winningOutcome) {
                 staked[oracles[i]] = 1;
@@ -163,7 +163,7 @@ contract Settlement is ISettlement {
         require(IERC20(marsToken).transferFrom(address(this), msg.sender, staked[msg.sender]), "FAILED TO TRANSFER AMOUNT");
     }
 
-    function setWinningOutcome(address _predictionMarket, bytes32 _outcome) public {
+    function setWinningOutcome(address _predictionMarket, bytes16 _outcome) public {
         if (marketStatus[_predictionMarket].finalized == true) {
             return;
         }
@@ -179,8 +179,8 @@ contract Settlement is ISettlement {
         }
     }
 
-    function getWinningOutcome(address _predictionMarket) external override returns (bytes32) {
-        setWinningOutcome(_predictionMarket, bytes32(0));
+    function getWinningOutcome(address _predictionMarket) external override returns (bytes16) {
+        setWinningOutcome(_predictionMarket, bytes16(0));
 
         require(marketStatus[_predictionMarket].finalized == true, "PREDICTION IS NOT YET CONCLUDED");
         return marketStatus[_predictionMarket].winningOutcome;
