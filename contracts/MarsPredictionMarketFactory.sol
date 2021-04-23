@@ -33,11 +33,17 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory {
     mapping(address => PredictionMarket) public predictionMarkets;
 	
     address public immutable addressResolver;
-    address governer;
+    address governor;
 
     constructor(address _addressResolver) {
         addressResolver = _addressResolver;
+		governor = msg.sender;
     }
+	
+	function setGovernor(address _governor) external override {
+        require(msg.sender == governor);
+		governor = _governor;
+	}
 	
 	function updateCategory(
         bytes16 uuid,
@@ -45,7 +51,7 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory {
 		string memory name,
 		string memory description
     ) external override {
-        // require(msg.sender == governer);
+        require(msg.sender == governor);
 		
 		Category memory category;
 		category.position = position;
@@ -65,7 +71,7 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory {
 		string memory description,
 		MilestoneStatus status
     ) external override {
-        // require(msg.sender == governer);
+        require(msg.sender == governor);
 		
 		Milestone memory milestone;
 		milestone.categoryUuid = categoryUuid;
@@ -87,7 +93,7 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory {
         address token,
         uint256 dueDate
     ) external override returns (address) {
-        // require(msg.sender == governer);
+        require(msg.sender == governor);
         require(dueDate > block.timestamp, "MARS: Invalid prediction market due date");
         MarsPredictionMarket predictionMarket = new MarsPredictionMarket(token, dueDate);
 
@@ -111,7 +117,7 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory {
 		uint8 position, 
 		string memory name
 	) external override {
-        // require(msg.sender == governer);
+        require(msg.sender == governor);
         MarsPredictionMarket(predictionMarket).addOutcome(uuid, position, name);
 		emit OutcomeChangedEvent(uuid, predictionMarket, position, name);
     }

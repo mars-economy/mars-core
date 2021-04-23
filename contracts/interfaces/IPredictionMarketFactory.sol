@@ -11,6 +11,8 @@ interface IPredictionMarketFactory {
 	event PredictionMarketCreatedEvent(bytes16 milestoneUuid, uint8 position, string name, string description, address token, uint256 dueDate, address contractAddress);
 	event OutcomeChangedEvent(bytes16 uuid, address predictionMarket, uint8 position, string name);
 
+	function setGovernor(address _governor) external;
+
 	function updateCategory(
         bytes16 uuid,
 		uint8 position,
