@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 interface IPredictionMarket {
-    event PredictionEvent(address _indexedAccount, bytes16 _outcome, uint256 _amount);
+    event PredictionEvent(address indexed _account, bytes16 _outcome, uint256 _amount);
 
     function getNumberOfOutcomes() external view returns (uint256);
 
