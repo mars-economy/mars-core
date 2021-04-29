@@ -2,6 +2,10 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 interface ISettlement {
+    event PotentialOracleEvent(address _newOracle);
+    event OracleAcceptedEvent(address _newOracle, uint256 _sum);
+    event OracleVotedEvent(address _oracle, address _predictionMarket, bytes16 _outcome);
+
     function registerMarket(
         address _predictionMarket,
         bytes16[] memory _outcomes,

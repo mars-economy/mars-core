@@ -13,7 +13,8 @@ const config: HardhatUserConfig = {
   },
   networks: {
     bsctestnet: {
-      url: "http://mainnet.node.metal.liquifi.org:8575/",
+      // url: "http://mainnet.node.metal.liquifi.org:8575/",
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
       accounts: [privateKey],
       chainId: 97,
       gasPrice: 20000000000,

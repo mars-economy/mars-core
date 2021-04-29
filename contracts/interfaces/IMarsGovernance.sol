@@ -11,11 +11,11 @@ interface IMarsGovernance {
     function removeOracle(address _oracle) external;
 
     function createMarket(
-		address _proposalUuid,
-		bytes16 _milestoneUuid,
-		uint8 _position,
-		string memory _name,
-		string memory _description,
+        address _proposalUuid,
+        bytes16 _milestoneUuid,
+        uint8 _position,
+        string memory _name,
+        string memory _description,
         bytes16[] memory _outcomes,
         address _purchaseToken,
         uint256 _votingEnd

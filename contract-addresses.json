@@ -1,8 +1,8 @@
 {
-	"daiToken": "",
-	"marsToken": "0x9a1Ab8dfa80A4f86BaCf829Dd28bc94CD60863Aa",
-	"govToken": "0x3bBBB30f880cDC6a611411c00df05024504c306d",
-	"governance": "0x027AF35e1617Be2eCEfB02057EB93Abc9467A615",
-	"settlement": "0x360F74d8001987c643a6b66a44a28e25b92Bc0a6",
-	"predictionMarketFactory": "0x436aE9860aBC1cE5168837B18160Bc22C976Ea5E"
+  "daiToken": "0x8Cc71938F07dFa9549B70a545eEB8FE40c9FD258",
+  "marsToken": "0xb35B7e4C616C06A6f37c436D6e5231B6a34694c0",
+  "govToken": "",
+  "governance": "",
+  "settlement": "0xF9691e47D0fC81dFBCbAca30ddADe46502e4E9b0",
+  "predictionMarketFactory": "0xe859d2776F0A5548b88b8144eB6F8E0AA3491Df6"
 }

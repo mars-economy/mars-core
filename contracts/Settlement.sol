@@ -8,10 +8,6 @@ import "./interfaces/ISettlement.sol";
 import "hardhat/console.sol"; //TODO: REMOVE
 
 contract Settlement is ISettlement {
-    event PotentialOracle(address _newOracle);
-    event OracleAccepted(address _newOracle, uint256 _sum);
-    event OracleVoted(address _oracle, address _predictionMarket, bytes16 _outcome);
-
     mapping(address => uint256) public staked; //how much a oracle has staked,
     //uint = 1 -> added and not staked,
     //uint > 1 -> accepted and staked,
@@ -38,11 +34,14 @@ contract Settlement is ISettlement {
     address marsToken;
 
     uint256 timeToOpenDispute = 7 days;
+    uint256 votingPeriod = 1 days;
+
     bool startedDispute;
 
     constructor(address _marsToken, address _governance) {
         marsToken = _marsToken;
-        governance = _governance;
+        // governance = _governance;
+        governance = msg.sender;
     }
 
     function registerMarket(
@@ -61,7 +60,7 @@ contract Settlement is ISettlement {
         require(staked[_newOracle] == 0, "ORACLE ADLREADY ADDED");
 
         staked[_newOracle] = 1;
-        emit PotentialOracle(msg.sender);
+        emit PotentialOracleEvent(msg.sender);
     }
 
     function find(address value) internal returns (uint256) {
@@ -80,7 +79,6 @@ contract Settlement is ISettlement {
 
         uint256 index = find(oracle);
 
-        address sklj = oracles[index];
         oracles[index] = oracles[oracles.length - 1];
         oracles.pop();
     }
@@ -92,18 +90,20 @@ contract Settlement is ISettlement {
         oracles.push(msg.sender);
         staked[msg.sender] = oracleAcceptanceAmount;
 
-        emit OracleAccepted(msg.sender, oracleAcceptanceAmount);
+        emit OracleAcceptedEvent(msg.sender, oracleAcceptanceAmount);
     }
 
     function voteWinningOutcome(address _predictionMarket, bytes16 _outcome) external override {
+        require(marketStatus[_predictionMarket].votingEnd != 0, "MARKET NOT REGISTERED");
         require(staked[msg.sender] > 1, "YOU SHALL NOT VOTE, until you stake 1 mil tokens");
         require(block.timestamp < marketStatus[_predictionMarket].votingEnd, "VOTING PERIOD HAS ENDED");
+        // require(block.timestamp < marketStatus[_predictionMarket].votingEnd + votingPeriod, "VOTING PERIOD HASN'T ENDED YET");
 
         //TODO: check if vote is defined
         marketStatus[_predictionMarket].oraclesVoted = marketStatus[_predictionMarket].oraclesVoted + 1;
 
         oracleOutcome[msg.sender][_predictionMarket] = _outcome;
-        emit OracleVoted(msg.sender, _predictionMarket, _outcome);
+        emit OracleVotedEvent(msg.sender, _predictionMarket, _outcome);
     }
 
     //for mars holders, costs 100k mars tokens, can be activated only if consensus was reached
@@ -157,7 +157,7 @@ contract Settlement is ISettlement {
 
     // startSettlementProcedure //24h
     function withdraw() external override {
-        require(oracles.length > 1);
+        require(oracles.length > 1, "LAST ORACLE CAN'T LEAVE");
 
         staked[msg.sender] = 1; //security reason
         require(IERC20(marsToken).transferFrom(address(this), msg.sender, staked[msg.sender]), "FAILED TO TRANSFER AMOUNT");
@@ -172,7 +172,11 @@ contract Settlement is ISettlement {
             marketStatus[_predictionMarket].winningOutcome = _outcome;
             marketStatus[_predictionMarket].finalized = true;
             punishOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);
-        } else if (marketStatus[_predictionMarket].votingEnd + timeToOpenDispute < block.timestamp && startedDispute == false) {
+        } else if (
+            marketStatus[_predictionMarket].votingEnd + timeToOpenDispute < block.timestamp &&
+            startedDispute == false &&
+            reachedConsensus(_predictionMarket)
+        ) {
             marketStatus[_predictionMarket].winningOutcome = oracleOutcome[oracles[0]][_predictionMarket];
             marketStatus[_predictionMarket].finalized = true;
             punishOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);

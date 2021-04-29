@@ -14,10 +14,10 @@ library ProposalTypes {
     }
 
     struct CreateMarketProposal {
-		bytes16 milestoneUuid;
-		uint8 position;
-		string name;
-		string description;
+        bytes16 milestoneUuid;
+        uint8 position;
+        string name;
+        string description;
         bytes16[] outcomes; //outcome1, outcome2, outcome3
         address token;
         uint256 votingEnd;

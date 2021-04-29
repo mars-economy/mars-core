@@ -91,11 +91,11 @@ contract MarsGovernance is IMarsGovernance {
     }
 
     function createMarket(
-		address _proposalUuid,
-		bytes16 _milestoneUuid,
-		uint8 _position,
-		string memory _name,
-		string memory _description,
+        address _proposalUuid,
+        bytes16 _milestoneUuid,
+        uint8 _position,
+        string memory _name,
+        string memory _description,
         bytes16[] memory _outcomes,
         address _purchaseToken,
         uint256 _votingEnd
@@ -188,18 +188,18 @@ contract MarsGovernance is IMarsGovernance {
                 IPredictionMarket market =
                     IPredictionMarket(
                         marsFactory.createMarket(
-							createMarketProposal[_proposal].milestoneUuid,
-							createMarketProposal[_proposal].position,
-							createMarketProposal[_proposal].name,
-							createMarketProposal[_proposal].description,
-							createMarketProposal[_proposal].token,
+                            createMarketProposal[_proposal].milestoneUuid,
+                            createMarketProposal[_proposal].position,
+                            createMarketProposal[_proposal].name,
+                            createMarketProposal[_proposal].description,
+                            createMarketProposal[_proposal].token,
                             createMarketProposal[_proposal].votingEnd
                         )
                     );
 
                 for (uint256 i = 0; i < createMarketProposal[_proposal].outcomes.length; i++) {
-					// TODO: change to real outcome params and invoke via factory
-                    market.addOutcome(createMarketProposal[_proposal].outcomes[i], 1, '');
+                    // TODO: change to real outcome params and invoke via factory
+                    market.addOutcome(createMarketProposal[_proposal].outcomes[i], 1, "");
                 }
 
                 settlement.registerMarket(
