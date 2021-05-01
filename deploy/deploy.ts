@@ -149,10 +149,10 @@ async function addOutcomes(marketAddress: string, outcomes: string[][]) {
 
 async function populateMarkets() {
   const categories = Array(
-    Array("0x5ffabec44f7a4cd58bf8fae36fe99003", "1", "Preparing for Mars", ""),
-    Array("0xb00b5428da0349e48763781ed54d7579", "2", "Crossing the Frontier", ""),
-    Array("0x64b11d8713b44ac2a32a55523c5a066d", "3", "Discovering the Red Planet", ""),
-    Array("0x8bd19e518f4f46dcae86a19480696416", "4", "A New Home", "")
+    Array("0x5ffabec44f7a4cd58bf8fae36fe99003", "1", "Preparing for Mars", "At an accelerating rate, private companies and national space agencies together are conducting rapid iterative testing and preparing to  pilot missions. Engineers, scientists, artists, and designers around the world are laying the groundwork as humanity ventures to the next frontier."),
+    Array("0xb00b5428da0349e48763781ed54d7579", "2", "Crossing the frontier", "Sending humans aboard a spacecraft to Mars will be no easy feat. How can we enable spacecraft to safely make the interplanetary journey between Earth and Mars while minimizing travel times and expenses?"),
+    Array("0x64b11d8713b44ac2a32a55523c5a066d", "3", "Discovering the Red Planet", "Exploring Mars and generating scientific data from the planet's surface will be critical to the success of future missions as the insights gathered will enable humans to survive on this new frontier."),
+    Array("0x8bd19e518f4f46dcae86a19480696416", "4", "A new home", "One of the first steps will be establishing a base on Mars, like the McMurdo Station in Antarctica or like the International Space Station, can be used as a hub for innovation, entrepreneurship, and space tourism.")
   )
 
   const milestones = Array(
@@ -276,25 +276,25 @@ async function populateMarkets() {
   }
   console.log("CATEGORIES DONE")
 
-  for (var i = 0; i < milestones.length; i++) {
-    console.log(i, milestones.length)
-    await createMilestone(milestones[i][0], milestones[i][1], parseInt(milestones[i][2]), milestones[i][3], milestones[i][4])
-  }
-  console.log("MILESTONES DONE")
+  //for (var i = 0; i < milestones.length; i++) {
+  //  console.log(i, milestones.length)
+  //  await createMilestone(milestones[i][0], milestones[i][1], parseInt(milestones[i][2]), milestones[i][3], milestones[i][4])
+  //}
+  //console.log("MILESTONES DONE")
 
-  for (var i = 0; i < markets.length; i++) {
-    console.log(i, markets.length)
-    await createMarket(
-      markets[i][0],
-      parseInt(markets[i][1]),
-      markets[i][2],
-      markets[i][3],
-      "0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee",
-      parseInt(markets[i][4]),
-      outcomes[i]
-    )
-  }
-  console.log("MARKETS DONE")
+  //for (var i = 0; i < markets.length; i++) {
+  //  console.log(i, markets.length)
+  //  await createMarket(
+  //    markets[i][0],
+  //    parseInt(markets[i][1]),
+  //    markets[i][2],
+  //    markets[i][3],
+  //    "0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee",
+  //    parseInt(markets[i][4]),
+  //    outcomes[i]
+  //  )
+  //}
+  //console.log("MARKETS DONE")
 
   // DEPRECATED
   // // for(var i = 0; i < marketAddress.length; i++) {
@@ -310,7 +310,7 @@ async function main() {
   ADDR["daiToken"] = "0x8Cc71938F07dFa9549B70a545eEB8FE40c9FD258"
   ADDR["marsToken"] = "0xb35B7e4C616C06A6f37c436D6e5231B6a34694c0"
   ADDR["settlement"] = "0xF9691e47D0fC81dFBCbAca30ddADe46502e4E9b0"
-  //   ADDR["predictionMarketFactory"] = '0x4405a16FFCb4E4F228f0B21c16e92635609435b1'
+  ADDR["predictionMarketFactory"] = "0x7838c7a8d7285Adc612c87cA2b8b9BCd5eb3EBd9"
 
   // const governanceRouter = await deployGovernanceRouter(wethAddress[network.name]);
   //   await deployGovToken("")
@@ -319,7 +319,7 @@ async function main() {
   //   await deployDaiToken("")
   //   await deployMarsToken("")
   //   await deploySettlement("")
-  await deployFactory("") //Factory.deploy(ADDR["marsToken"], ADDR["settlement"])
+  //await deployFactory("") //Factory.deploy(ADDR["marsToken"], ADDR["settlement"])
 
   //await governance.setSettlement(settlement.address)
   //await predictionMarket.connect(owner).setSettlement(settlement.address)
