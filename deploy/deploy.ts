@@ -239,7 +239,7 @@ async function main() {
   ADDR["daiToken"] = "0x8Cc71938F07dFa9549B70a545eEB8FE40c9FD258"
   ADDR["marsToken"] = "0xb35B7e4C616C06A6f37c436D6e5231B6a34694c0"
   ADDR["settlement"] = "0xF9691e47D0fC81dFBCbAca30ddADe46502e4E9b0"
-  ADDR["predictionMarketFactory"] = "0x7838c7a8d7285Adc612c87cA2b8b9BCd5eb3EBd9"
+  ADDR["predictionMarketFactory"] = "0xCbE287517a229fa308960251aA30b55abA7E1fE3"
 
   // const governanceRouter = await deployGovernanceRouter(wethAddress[network.name]);
   //   await deployGovToken("")

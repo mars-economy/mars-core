@@ -6,6 +6,8 @@ import "./interfaces/IShareToken.sol";
 import "./dependencies/tokens/MarsERC20Token.sol";
 import "./Settlement.sol";
 import "./Owned.sol";
+import "./libraries/Market.sol";
+
 
 import "hardhat/console.sol"; //TODO: REMOVE
 
@@ -45,23 +47,19 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
         token = _token;
     }
 
-    struct UserOutcomeInfo {
-        bytes16 outcomeUuid;
-        bool suspended;
-        uint256 stakeAmount;
-        uint256 currentReward;
-        bool rewardReceived;
-    }
 
-    function getUserPredictionState() external view returns (UserOutcomeInfo[] memory) {
-        UserOutcomeInfo[] memory app = new UserOutcomeInfo[](outcomes.length);
+    function getUserPredictionState() external view override returns (Market.UserOutcomeInfo[] memory) {
+        Market.UserOutcomeInfo[] memory app = new Market.UserOutcomeInfo[](outcomes.length);
 
         for (uint256 i = 0; i < outcomes.length; i++) {
             app[i].outcomeUuid = outcomes[i];
             app[i].stakeAmount = IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(msg.sender);
-            app[i].currentReward =
-                (IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(msg.sender) * totalPredicted) /
-                IERC20(tokenOutcomeAddress[outcomes[i]]).totalSupply();
+			uint totalSupply = IERC20(tokenOutcomeAddress[outcomes[i]]).totalSupply();
+			if (totalSupply != 0)
+				app[i].currentReward =
+					(IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(msg.sender) * totalPredicted) / totalSupply;
+			else
+				app[i].currentReward = 0;
             app[i].rewardReceived = outcomes[i] == winningOutcome ? claimed[msg.sender] : false;
         }
 
