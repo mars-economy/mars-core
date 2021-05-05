@@ -4,6 +4,8 @@ import "@nomiclabs/hardhat-ethers"
 import "@nomiclabs/hardhat-waffle"
 import { privateKey, marsKey } from "./wallet"
 
+import "solidity-coverage"
+
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.2",

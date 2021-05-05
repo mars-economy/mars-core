@@ -23,8 +23,8 @@ async function deployGovToken(wethAddress: string) {
 }
 
 async function deployMarsToken(wethAddress: string) {
-  const MarsToken = await ethers.getContractFactory("ERC20")
-  const marsToken = await MarsToken.deploy(1_000_000, "Test marsToken", 18, "DMT")
+  const MarsToken = await ethers.getContractFactory("MarsERC20Token")
+  const marsToken = await MarsToken.deploy(1_000_000_000 * 10 ** 18, "Test marsToken", 18, "DMT")
   await marsToken.deployed()
   console.log("marsToken:", marsToken.address)
   ADDR["marsToken"] = marsToken.address
@@ -33,7 +33,7 @@ async function deployMarsToken(wethAddress: string) {
 
 async function deployDaiToken(wethAddress: string) {
   const DaiToken = await ethers.getContractFactory("ERC20")
-  const daiToken = await DaiToken.deploy(1_000_000, "Test daiToken", 18, "GTK")
+  const daiToken = await DaiToken.deploy(1_000_000 * 10 ** 18, "Test daiToken", 18, "GTK")
   await daiToken.deployed()
   console.log("daiToken:", daiToken.address)
   ADDR["daiToken"] = daiToken.address

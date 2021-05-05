@@ -19,6 +19,7 @@ contract Settlement is ISettlement {
         uint256 oraclesVoted;
         bytes16 winningOutcome;
         bool finalized;
+        bool startedDispute;
     }
 
     // mapping(address => mapping(address => mapping(bytes16=>uint))) oracleOutcome;
@@ -26,17 +27,17 @@ contract Settlement is ISettlement {
     //oracle => prediction => outcome
     mapping(address => MarketStatus) public marketStatus;
 
-    uint256 oracleAcceptanceAmount = 1_000_000; //FIXME: add ether
-    uint256 disputeFeeAmount = 100_000; //FIXME: add ether
+    uint256 oracleAcceptanceAmount = 1_000_000; // * 10**18;
+    uint256 disputeFeeAmount = 100_000; // * 10**18;
 
     address governance;
     address[] oracles;
     address marsToken;
 
-    uint256 timeToOpenDispute = 7 days;
-    uint256 votingPeriod = 1 days;
+    uint256 public timeToOpenDispute = 60 * 60 * 24 * 7;
+    uint256 public votingPeriod = 60 * 60 * 24;
 
-    bool startedDispute;
+    uint256 public startedDisputes;
 
     constructor(address _marsToken, address _governance) {
         marsToken = _marsToken;
@@ -96,8 +97,9 @@ contract Settlement is ISettlement {
     function voteWinningOutcome(address _predictionMarket, bytes16 _outcome) external override {
         require(marketStatus[_predictionMarket].votingEnd != 0, "MARKET NOT REGISTERED");
         require(staked[msg.sender] > 1, "YOU SHALL NOT VOTE, until you stake 1 mil tokens");
-        require(block.timestamp < marketStatus[_predictionMarket].votingEnd, "VOTING PERIOD HAS ENDED");
-        // require(block.timestamp < marketStatus[_predictionMarket].votingEnd + votingPeriod, "VOTING PERIOD HASN'T ENDED YET");
+
+        require(block.timestamp > marketStatus[_predictionMarket].votingEnd, "VOTING PERIOD HASN'T ENDED YET");
+        require(block.timestamp < marketStatus[_predictionMarket].votingEnd + votingPeriod, "VOTING PERIOD HAS ENDED");
 
         //TODO: check if vote is defined
         marketStatus[_predictionMarket].oraclesVoted = marketStatus[_predictionMarket].oraclesVoted + 1;
@@ -113,11 +115,13 @@ contract Settlement is ISettlement {
 
         require(reachedConsensus(_predictionMarket), "CONSENSUS HAS BEEN REACHED");
 
+        marketStatus[_predictionMarket].startedDispute = true;
+
         require(IERC20(marsToken).transferFrom(msg.sender, address(this), disputeFeeAmount), "FAILED TO TRANSFER AMOUNT");
 
         IMarsGovernance(governance).changeOutcome(_predictionMarket, marketStatus[_predictionMarket].outcomes);
 
-        startedDispute = true;
+        startedDisputes += 1;
     }
 
     //for all users, free of cost, can be activated only if consensus wasn't reached
@@ -127,9 +131,11 @@ contract Settlement is ISettlement {
 
         require(!reachedConsensus(_predictionMarket), "CONSENSUS HAS NOT BEEN REACHED");
 
+        marketStatus[_predictionMarket].startedDispute = true;
+
         IMarsGovernance(governance).changeOutcome(_predictionMarket, marketStatus[_predictionMarket].outcomes);
 
-        startedDispute = true;
+        startedDisputes += 1;
     }
 
     function reachedConsensus(address _predictionMarket) public view returns (bool) {
@@ -172,14 +178,24 @@ contract Settlement is ISettlement {
             marketStatus[_predictionMarket].winningOutcome = _outcome;
             marketStatus[_predictionMarket].finalized = true;
             punishOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);
+
+            if (marketStatus[_predictionMarket].startedDispute == true) {
+                startedDisputes -= 1;
+                marketStatus[_predictionMarket].startedDispute = false;
+            }
         } else if (
-            marketStatus[_predictionMarket].votingEnd + timeToOpenDispute < block.timestamp &&
-            startedDispute == false &&
+            marketStatus[_predictionMarket].votingEnd + votingPeriod + timeToOpenDispute < block.timestamp &&
+            marketStatus[_predictionMarket].finalized == false &&
             reachedConsensus(_predictionMarket)
         ) {
             marketStatus[_predictionMarket].winningOutcome = oracleOutcome[oracles[0]][_predictionMarket];
             marketStatus[_predictionMarket].finalized = true;
+            marketStatus[_predictionMarket].startedDispute = false;
             punishOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);
+            if (marketStatus[_predictionMarket].startedDispute == true) {
+                startedDisputes -= 1;
+                marketStatus[_predictionMarket].startedDispute = false;
+            }
         }
     }
 

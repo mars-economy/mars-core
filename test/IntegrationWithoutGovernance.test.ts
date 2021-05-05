@@ -60,6 +60,8 @@ describe("Prediction Market", async () => {
     let oracle2_ = users[4]
     let timeEnd = await timeoutAppended(ethers.provider, 60 * 60 * 24 * 2)
 
+    console.log("timeend", timeEnd)
+
     await settlement.connect(owner).addOracle(oracle1)
     await settlement.connect(owner).addOracle(oracle2)
 
@@ -72,7 +74,7 @@ describe("Prediction Market", async () => {
     await settlement.connect(oracle2_).acceptAndStake()
     expect((await settlement.getOracles()).length).to.be.equal(2)
 
-    let tx = await predictionMarketFactory.connect(owner).createMarket(MILESTONE, 1, "By 2022", "", daiToken.address, timeEnd)
+    let tx = await predictionMarketFactory.connect(owner).createMarket(MILESTONE, 1, "Example", "Example", daiToken.address, timeEnd)
     let rx = await tx.wait()
 
     let _newMarket = rx.events![1].args!.contractAddress // getting address from event
@@ -87,11 +89,6 @@ describe("Prediction Market", async () => {
 
     expect(await settlement.reachedConsensus(_newMarket)).to.be.equal(false)
 
-    await settlement.connect(oracle1_).voteWinningOutcome(_newMarket, YES)
-    await settlement.connect(oracle2_).voteWinningOutcome(_newMarket, YES)
-
-    expect(await settlement.reachedConsensus(_newMarket)).to.be.equal(true)
-
     await daiToken.connect(users[0]).approve(predictionMarket.address, 1_000)
     await daiToken.connect(users[1]).approve(predictionMarket.address, 1_000)
 
@@ -100,7 +97,17 @@ describe("Prediction Market", async () => {
     await predictionMarket.connect(users[0]).predict(YES, 1000)
     await predictionMarket.connect(users[1]).predict(NO, 1000)
 
-    await wait(ethers, timeEnd)
+    await expect(settlement.connect(oracle1_).voteWinningOutcome(_newMarket, YES)).to.be.revertedWith("VOTING PERIOD HASN'T ENDED")
+
+    await wait(ethers, 60 * 60 * 24 * 2)
+
+    await settlement.connect(oracle1_).voteWinningOutcome(_newMarket, YES)
+    await settlement.connect(oracle2_).voteWinningOutcome(_newMarket, YES)
+
+    await expect(predictionMarket.connect(users[0]).getReward()).to.be.revertedWith("PREDICTION IS NOT YET CONCLUDED")
+
+    expect(await settlement.reachedConsensus(_newMarket)).to.be.equal(true)
+    await wait(ethers, 60 * 60 * 24 * 8)
 
     let yesToken = ERC20__factory.connect((await predictionMarket.getTokens())[0], owner)
     let noToken = ERC20__factory.connect((await predictionMarket.getTokens())[1], owner)
@@ -110,8 +117,8 @@ describe("Prediction Market", async () => {
 
     await checkBalances([users[0], users[1]], [9000, 9000])
 
-    console.log("user0", await predictionMarket.connect(users[0]).getUserPredictionState())
-    console.log("user1", await predictionMarket.connect(users[1]).getUserPredictionState())
+    console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress()))
+    console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress()))
 
     expect(await predictionMarket.connect(users[0]).getReward()).to.be.ok
     expect(await predictionMarket.connect(users[1]).getReward()).to.be.ok

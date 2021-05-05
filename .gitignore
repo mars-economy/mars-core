@@ -5,3 +5,5 @@ cache
 wallet.ts
 .idea
 .vscode
+coverage
+coverage.json
