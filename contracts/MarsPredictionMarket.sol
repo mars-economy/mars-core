@@ -6,6 +6,8 @@ import "./interfaces/IShareToken.sol";
 import "./dependencies/tokens/MarsERC20OutcomeToken.sol";
 import "./Settlement.sol";
 import "./Owned.sol";
+import "./libraries/Market.sol";
+
 
 import "hardhat/console.sol"; //TODO: REMOVE
 
@@ -52,11 +54,16 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
         for (uint256 i = 0; i < outcomes.length; i++) {
             app[i].outcomeUuid = outcomes[i];
             app[i].stakeAmount = IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(_user);
-            uint256 amount =
-                ((IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(_user) * totalPredicted) /
-                    IERC20(tokenOutcomeAddress[outcomes[i]]).totalSupply());
-            app[i].currentReward = (amount * fee) / feeDivisor;
+            uint totalSupply = IERC20(tokenOutcomeAddress[outcomes[i]]).totalSupply();
+			if (totalSupply != 0){
+                uint256 amount =
+                    ((IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(_user) * totalPredicted) /
+                        IERC20(tokenOutcomeAddress[outcomes[i]]).totalSupply());
+                app[i].currentReward = (amount * fee) / feeDivisor;
+            }
+            //else app[i].currentReward = 0, but that goes by default
             app[i].rewardReceived = outcomes[i] == winningOutcome ? claimed[_user] : false;
+
         }
 
         return app;

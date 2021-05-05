@@ -149,10 +149,10 @@ async function addOutcomes(marketAddress: string, outcomes: string[][]) {
 
 async function populateMarkets() {
   const categories = Array(
-    Array("0x5ffabec44f7a4cd58bf8fae36fe99003", "1", "Preparing for Mars", ""),
-    Array("0xb00b5428da0349e48763781ed54d7579", "2", "Crossing the Frontier", ""),
-    Array("0x64b11d8713b44ac2a32a55523c5a066d", "3", "Discovering the Red Planet", ""),
-    Array("0x8bd19e518f4f46dcae86a19480696416", "4", "A New Home", "")
+    Array("0x5ffabec44f7a4cd58bf8fae36fe99003", "1", "Preparing for Mars", "At an accelerating rate, private companies and national space agencies together are conducting rapid iterative testing and preparing to  pilot missions. Engineers, scientists, artists, and designers around the world are laying the groundwork as humanity ventures to the next frontier."),
+    Array("0xb00b5428da0349e48763781ed54d7579", "2", "Crossing the frontier", "Sending humans aboard a spacecraft to Mars will be no easy feat. How can we enable spacecraft to safely make the interplanetary journey between Earth and Mars while minimizing travel times and expenses?"),
+    Array("0x64b11d8713b44ac2a32a55523c5a066d", "3", "Discovering the Red Planet", "Exploring Mars and generating scientific data from the planet's surface will be critical to the success of future missions as the insights gathered will enable humans to survive on this new frontier."),
+    Array("0x8bd19e518f4f46dcae86a19480696416", "4", "A new home", "One of the first steps will be establishing a base on Mars, like the McMurdo Station in Antarctica or like the International Space Station, can be used as a hub for innovation, entrepreneurship, and space tourism.")
   )
 
   const milestones = Array(
@@ -163,111 +163,40 @@ async function populateMarkets() {
       "Crew for first Human Exploration Announced",
       ""
     ),
-    Array(
-      "0x9823b01faeed4b139ea387920c16551e",
-      "0xb00b5428da0349e48763781ed54d7579",
-      "1",
-      "Succesful test flight for SNX (constant updates)",
-      ""
-    ),
-    Array("0x13a12ea1f1cb4b6e96a3fbdfcf8c9814", "0xb00b5428da0349e48763781ed54d7579", "2", "First success of Spaceship Orbital Flight", ""),
-    Array(
-      "0xa69b77f3bda54f38bac865785d81ea4e",
-      "0xb00b5428da0349e48763781ed54d7579",
-      "3",
-      "First Operational Earth-Mars logistics trip",
-      ""
-    ),
-    Array(
-      "0x132d38ff1bbf43d2a21383cc639f27fc",
-      "0xb00b5428da0349e48763781ed54d7579",
-      "4",
-      "First Operational Starship Earth return trip",
-      ""
-    ),
-    Array(
-      "0xc9dceba8d2ef45a2a0c5ca5465d4a129",
-      "0x64b11d8713b44ac2a32a55523c5a066d",
-      "1",
-      "Bringing Mars to Earth: Return Mars sample to Earth",
-      ""
-    ),
-    Array("0x521a30e96c1b40b08b3e98294e70a2f3", "0x64b11d8713b44ac2a32a55523c5a066d", "2", "First Human on Mars", ""),
-    Array("0x95c6d5feed2f4e79a2d0aff3eba2a0e5", "0x64b11d8713b44ac2a32a55523c5a066d", "3", "Perseverance finds trace of life", ""),
-    Array(
-      "0xc7c761629cfd40c0836604b7b547cbb9",
-      "0x8bd19e518f4f46dcae86a19480696416",
-      "1",
-      "First Rocket 3D printed on Mars is launched",
-      ""
-    ),
-    Array("0xc54d2a758cbd4e9ba66ca13930ef1d97", "0x8bd19e518f4f46dcae86a19480696416", "2", "First permanent habitat is operational", ""),
-    Array(
-      "0x7080980bc410420697265caf98eb149a",
-      "0x8bd19e518f4f46dcae86a19480696416",
-      "3",
-      "First utilization of Space Resources to supply habitat",
-      ""
-    ),
-    Array("0xb938ddb63e9c495c824913ed85b48471", "0x8bd19e518f4f46dcae86a19480696416", "4", "Colony established with 10000 inhabitants", "")
+    Array("0x13a12ea1f1cb4b6e96a3fbdfcf8c9814", "0xb00b5428da0349e48763781ed54d7579", "1", "First Orbital Flight of Starship", ""),
+    Array("0x521a30e96c1b40b08b3e98294e70a2f3", "0x64b11d8713b44ac2a32a55523c5a066d", "1", "First Human on Mars", ""),
+    Array("0xb938ddb63e9c495c824913ed85b48471", "0x8bd19e518f4f46dcae86a19480696416", "1", "Martian Colonization reaches 10000 humans", "")
   )
 
   const markets = Array(
-    Array("0x13a12ea1f1cb4b6e96a3fbdfcf8c9814", "1", "By 2022", "", "1640995200"),
-    Array("0x0f7f86d810024f96ad265b067ec6c348", "1", "By 2025", "", "1735689600"),
-    Array("0x0f7f86d810024f96ad265b067ec6c348", "2", "Which Agency?", "", "1735689600"),
-    Array("0x9823b01faeed4b139ea387920c16551e", "1", "By June, 1 2021", "", "1622505600"),
-    Array("0xa69b77f3bda54f38bac865785d81ea4e", "1", "By 2035", "", "2051222400"),
-    Array("0xa69b77f3bda54f38bac865785d81ea4e", "2", "Starship vs SLS", "", "2051222400"),
-    Array("0x132d38ff1bbf43d2a21383cc639f27fc", "1", "By 2026", "", "1767225600"),
-    Array("0xc9dceba8d2ef45a2a0c5ca5465d4a129", "1", "By 2026", "", "1767225600"),
-    Array("0x521a30e96c1b40b08b3e98294e70a2f3", "1", "By 2032", "", "1956528000"),
-    Array("0x95c6d5feed2f4e79a2d0aff3eba2a0e5", "1", "By 2026", "", "1767225600"),
-    Array("0xc7c761629cfd40c0836604b7b547cbb9", "1", "By 2040", "", "2208988800"),
-    Array("0xc54d2a758cbd4e9ba66ca13930ef1d97", "1", "By 2026", "", "1767225600"),
-    Array("0x7080980bc410420697265caf98eb149a", "1", "By 2030", "", "1893456000"),
-    Array("0xb938ddb63e9c495c824913ed85b48471", "1", "By 2040", "", "2208988800")
+    Array("0x0f7f86d810024f96ad265b067ec6c348", "1", "NASA will announce the planned crew members for first Human Exploration of Mars by the year of 2025", "", "1767225599"),
+    Array("0x13a12ea1f1cb4b6e96a3fbdfcf8c9814", "1", "Starship will have its first orbital flight and safely land without exploding by the year of 2023", "", "1704067199"),
+    Array("0x521a30e96c1b40b08b3e98294e70a2f3", "1", "The first human will set foot on Mars by the year of 2032", "", "1988150399"),
+    Array("0xb938ddb63e9c495c824913ed85b48471", "1", "Mars-based activities have led to 10000 humans on Mars by the year of 2050", "", "2556143999")
   )
 
-  const marketAddress = Array(
-    "0x07B21a1de9eB34098820b45132bC831ae5887040",
-    "0x9Fbb1106B708ea5e261aCc6FDB9CD85Fd3eC78ee",
-    "0x9F35f71610a4F748203Fb20941cd881e83ac490b",
-    "0xa012A8268612772db0e0f4c1d7883b895b1cfE64",
-    "0x5E7634C4B5fd6E590F47Eb40ad4C5b8Dc4183066",
-    "0x0A1C804EbB869D2D79D1eAE8E278Cd504840A423",
-    "0xdaB367840415C7f666F5863B6f6CDD2e132912D1",
-    "0xd3569a23A7dB630AA4C74160548F3A97E97a1160",
-    "0x6F328A3a70828b984d88B7752B4211A2Ee1aCEeE",
-    "0x5E0fe83ee18B3Bd7608028C31DE1a259767E4EC3",
-    "0xBC92365e267966C290689f838caC69E889391cE1",
-    "0x8be99FFC6C0e2fec81B3BbA199882Af3C737d568",
-    "0x6D418e9792c99463d1d034CE57704ac04E2Dbdec",
-    "0xA7B5A6fF97Ea26AcB1cfBfE1ffaEbF46C6ef072d"
-  )
+  //const marketAddress = Array(
+  //  "0x07B21a1de9eB34098820b45132bC831ae5887040",
+  //  "0x9Fbb1106B708ea5e261aCc6FDB9CD85Fd3eC78ee",
+  //  "0x9F35f71610a4F748203Fb20941cd881e83ac490b",
+  //  "0xa012A8268612772db0e0f4c1d7883b895b1cfE64",
+  //  "0x5E7634C4B5fd6E590F47Eb40ad4C5b8Dc4183066",
+  //  "0x0A1C804EbB869D2D79D1eAE8E278Cd504840A423",
+  //  "0xdaB367840415C7f666F5863B6f6CDD2e132912D1",
+  //  "0xd3569a23A7dB630AA4C74160548F3A97E97a1160",
+  //  "0x6F328A3a70828b984d88B7752B4211A2Ee1aCEeE",
+  //  "0x5E0fe83ee18B3Bd7608028C31DE1a259767E4EC3",
+  //  "0xBC92365e267966C290689f838caC69E889391cE1",
+  //  "0x8be99FFC6C0e2fec81B3BbA199882Af3C737d568",
+  //  "0x6D418e9792c99463d1d034CE57704ac04E2Dbdec",
+  //  "0xA7B5A6fF97Ea26AcB1cfBfE1ffaEbF46C6ef072d"
+  //)
 
   const outcomes = Array(
     Array(Array("0xc53ef995914f4b409b22e6128c2bcf17", "Yes"), Array("0xc2c2c6cb226b42c4b36bf4b4dcb6ba17", "No")),
     Array(Array("0x6f471a5b81d04c5c82336577df545a01", "Yes"), Array("0x67626b863c99496dbce796d7c83415d6", "No")),
-    Array(
-      Array("0x6f2c59ae3ef74e48a11e6906e960fa9e", "NASA"),
-      Array("0x3f28d8be756f4bd7814b55a3ff89d5ce", "ESA"),
-      Array("0x338e8e790e2e4d509c7adc17e60c16f7", "JAXA"),
-      Array("0xdd67a01d84bd402aa415b48bd249eddc", "RUS"),
-      Array("0xdd8f8f23f73c4c08a8a1fbe88e33f17a", "PRC"),
-      Array("0xe005197444bf4a79a6b34eb75f973954", "Others")
-    ),
     Array(Array("0x63cf388c13914c9ea34e3947344a3a91", "Yes"), Array("0xc15005a06937422780754f8d498fc25f", "No")),
-    Array(Array("0xedf5058c59d34d5fa671b2035e4d9c1e", "Yes"), Array("0x8a6bc88956ec4cf2ab28dd6b9d9a21d0", "No")),
-    Array(Array("0x278c55433d184d499d8fdaca9737df4e", "Starship"), Array("0x48e8732aca854301b78f5cd285bcab6b", "SLS")),
-    Array(Array("0x25174325d51d4db6801a1630ab6f0f8d", "Yes"), Array("0x6ff4a1448cec42e1ba6acf2a10c83556", "No")),
-    Array(Array("0xbf9cb9177ed84ee8b6b144f4a4c9c27d", "Yes"), Array("0x5b9a045d776d45e89f321543c1a9a889", "No")),
-    Array(Array("0x9484bbcd57484d6d9d871dff09acd73d", "Yes"), Array("0x516e10a64c924de080054d0b252c3c31", "No")),
-    Array(Array("0x8e67a039bcbb4805ace5d704336de274", "Yes"), Array("0x7bd685df601d47d38ecc135b7f1b0915", "No")),
-    Array(Array("0x8ded5a1b185040c6a7e745a64b91d8ad", "Yes"), Array("0x6e91d0a8239e4e68bf3a82bb450d6898", "No")),
-    Array(Array("0x86ac0df9c34d469fac158ce6d9696ad8", "Yes"), Array("0x5e6d846b3ae246fe8a5c09d4b13f00fc", "No")),
-    Array(Array("0x65971f65796749e4be49a707038e7784", "Yes"), Array("0x13390113b9e34e96bd3b6443513e5786", "No")),
-    Array(Array("0x10a6bd7101fd411b84e4d10b34148785", "Yes"), Array("0x662903e3f9cf4b79a2eed3a76b6e2b0e", "No"))
+    Array(Array("0xedf5058c59d34d5fa671b2035e4d9c1e", "Yes"), Array("0x8a6bc88956ec4cf2ab28dd6b9d9a21d0", "No"))
   )
 
   for (var i = 0; i < categories.length; i++) {
@@ -310,7 +239,7 @@ async function main() {
   ADDR["daiToken"] = "0x8Cc71938F07dFa9549B70a545eEB8FE40c9FD258"
   ADDR["marsToken"] = "0xb35B7e4C616C06A6f37c436D6e5231B6a34694c0"
   ADDR["settlement"] = "0xF9691e47D0fC81dFBCbAca30ddADe46502e4E9b0"
-  //   ADDR["predictionMarketFactory"] = '0x4405a16FFCb4E4F228f0B21c16e92635609435b1'
+  ADDR["predictionMarketFactory"] = "0xCbE287517a229fa308960251aA30b55abA7E1fE3"
 
   // const governanceRouter = await deployGovernanceRouter(wethAddress[network.name]);
   //   await deployGovToken("")
@@ -319,7 +248,7 @@ async function main() {
   //   await deployDaiToken("")
   //   await deployMarsToken("")
   //   await deploySettlement("")
-  await deployFactory("") //Factory.deploy(ADDR["marsToken"], ADDR["settlement"])
+  //await deployFactory("") //Factory.deploy(ADDR["marsToken"], ADDR["settlement"])
 
   //await governance.setSettlement(settlement.address)
   //await predictionMarket.connect(owner).setSettlement(settlement.address)
