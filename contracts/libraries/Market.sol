@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 library Market {
-
     struct UserOutcomeInfo {
         bytes16 outcomeUuid;
         bool suspended;

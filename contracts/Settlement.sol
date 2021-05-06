@@ -178,6 +178,9 @@ contract Settlement is ISettlement {
         if (msg.sender == governance) {
             marketStatus[_predictionMarket].winningOutcome = _outcome;
             marketStatus[_predictionMarket].finalized = true;
+
+            emit OutcomeDefined(_predictionMarket, _outcome);
+
             punishOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);
 
             if (marketStatus[_predictionMarket].startedDispute == true) {
@@ -192,6 +195,9 @@ contract Settlement is ISettlement {
             marketStatus[_predictionMarket].winningOutcome = oracleOutcome[oracles[0]][_predictionMarket];
             marketStatus[_predictionMarket].finalized = true;
             marketStatus[_predictionMarket].startedDispute = false;
+
+            emit OutcomeDefined(_predictionMarket, oracleOutcome[oracles[0]][_predictionMarket]);
+
             punishOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);
             if (marketStatus[_predictionMarket].startedDispute == true) {
                 startedDisputes -= 1;

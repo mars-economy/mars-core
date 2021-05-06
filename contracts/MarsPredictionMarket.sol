@@ -8,7 +8,6 @@ import "./Settlement.sol";
 import "./Owned.sol";
 import "./libraries/Market.sol";
 
-
 import "hardhat/console.sol"; //TODO: REMOVE
 
 contract MarsPredictionMarket is IPredictionMarket, Owned {
@@ -48,24 +47,22 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
         governance = msg.sender;
     }
 
-    function getUserPredictionState(address _user) external view override returns (UserOutcomeInfo[] memory) {
+    function getUserPredictionState() external view override returns (UserOutcomeInfo[] memory) {
         UserOutcomeInfo[] memory app = new UserOutcomeInfo[](outcomes.length);
 
         for (uint256 i = 0; i < outcomes.length; i++) {
             app[i].outcomeUuid = outcomes[i];
-            app[i].stakeAmount = IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(_user);
-            uint totalSupply = IERC20(tokenOutcomeAddress[outcomes[i]]).totalSupply();
-			if (totalSupply != 0){
+            app[i].stakeAmount = IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(msg.sender);
+            uint256 totalSupply = IERC20(tokenOutcomeAddress[outcomes[i]]).totalSupply();
+            if (totalSupply != 0) {
                 uint256 amount =
-                    ((IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(_user) * totalPredicted) /
+                    ((IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(msg.sender) * totalPredicted) /
                         IERC20(tokenOutcomeAddress[outcomes[i]]).totalSupply());
-                app[i].currentReward = (amount * fee) / feeDivisor;
+                if (winningOutcome == bytes16(0) || winningOutcome == outcomes[i]) app[i].currentReward = amount;
             }
             //else app[i].currentReward = 0, but that goes by default
-            app[i].rewardReceived = outcomes[i] == winningOutcome ? claimed[_user] : false;
-
+            app[i].rewardReceived = outcomes[i] == winningOutcome ? claimed[msg.sender] : false;
         }
-
         return app;
     }
 

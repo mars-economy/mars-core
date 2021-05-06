@@ -149,10 +149,30 @@ async function addOutcomes(marketAddress: string, outcomes: string[][]) {
 
 async function populateMarkets() {
   const categories = Array(
-    Array("0x5ffabec44f7a4cd58bf8fae36fe99003", "1", "Preparing for Mars", "At an accelerating rate, private companies and national space agencies together are conducting rapid iterative testing and preparing to  pilot missions. Engineers, scientists, artists, and designers around the world are laying the groundwork as humanity ventures to the next frontier."),
-    Array("0xb00b5428da0349e48763781ed54d7579", "2", "Crossing the frontier", "Sending humans aboard a spacecraft to Mars will be no easy feat. How can we enable spacecraft to safely make the interplanetary journey between Earth and Mars while minimizing travel times and expenses?"),
-    Array("0x64b11d8713b44ac2a32a55523c5a066d", "3", "Discovering the Red Planet", "Exploring Mars and generating scientific data from the planet's surface will be critical to the success of future missions as the insights gathered will enable humans to survive on this new frontier."),
-    Array("0x8bd19e518f4f46dcae86a19480696416", "4", "A new home", "One of the first steps will be establishing a base on Mars, like the McMurdo Station in Antarctica or like the International Space Station, can be used as a hub for innovation, entrepreneurship, and space tourism.")
+    Array(
+      "0x5ffabec44f7a4cd58bf8fae36fe99003",
+      "1",
+      "Preparing for Mars",
+      "At an accelerating rate, private companies and national space agencies together are conducting rapid iterative testing and preparing to  pilot missions. Engineers, scientists, artists, and designers around the world are laying the groundwork as humanity ventures to the next frontier."
+    ),
+    Array(
+      "0xb00b5428da0349e48763781ed54d7579",
+      "2",
+      "Crossing the frontier",
+      "Sending humans aboard a spacecraft to Mars will be no easy feat. How can we enable spacecraft to safely make the interplanetary journey between Earth and Mars while minimizing travel times and expenses?"
+    ),
+    Array(
+      "0x64b11d8713b44ac2a32a55523c5a066d",
+      "3",
+      "Discovering the Red Planet",
+      "Exploring Mars and generating scientific data from the planet's surface will be critical to the success of future missions as the insights gathered will enable humans to survive on this new frontier."
+    ),
+    Array(
+      "0x8bd19e518f4f46dcae86a19480696416",
+      "4",
+      "A new home",
+      "One of the first steps will be establishing a base on Mars, like the McMurdo Station in Antarctica or like the International Space Station, can be used as a hub for innovation, entrepreneurship, and space tourism."
+    )
   )
 
   const milestones = Array(
@@ -169,10 +189,28 @@ async function populateMarkets() {
   )
 
   const markets = Array(
-    Array("0x0f7f86d810024f96ad265b067ec6c348", "1", "NASA will announce the planned crew members for first Human Exploration of Mars by the year of 2025", "", "1767225599"),
-    Array("0x13a12ea1f1cb4b6e96a3fbdfcf8c9814", "1", "Starship will have its first orbital flight and safely land without exploding by the year of 2023", "", "1704067199"),
+    Array(
+      "0x0f7f86d810024f96ad265b067ec6c348",
+      "1",
+      "NASA will announce the planned crew members for first Human Exploration of Mars by the year of 2025",
+      "",
+      "1767225599"
+    ),
+    Array(
+      "0x13a12ea1f1cb4b6e96a3fbdfcf8c9814",
+      "1",
+      "Starship will have its first orbital flight and safely land without exploding by the year of 2023",
+      "",
+      "1704067199"
+    ),
     Array("0x521a30e96c1b40b08b3e98294e70a2f3", "1", "The first human will set foot on Mars by the year of 2032", "", "1988150399"),
-    Array("0xb938ddb63e9c495c824913ed85b48471", "1", "Mars-based activities have led to 10000 humans on Mars by the year of 2050", "", "2556143999")
+    Array(
+      "0xb938ddb63e9c495c824913ed85b48471",
+      "1",
+      "Mars-based activities have led to 10000 humans on Mars by the year of 2050",
+      "",
+      "2556143999"
+    )
   )
 
   //const marketAddress = Array(

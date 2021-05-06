@@ -3,7 +3,6 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "../libraries/Market.sol";
 
-
 interface IPredictionMarket {
     struct UserOutcomeInfo {
         bytes16 outcomeUuid;
@@ -31,7 +30,7 @@ interface IPredictionMarket {
 
     function getTokens() external view returns (address[] memory);
 
-    function getUserPredictionState(address _user) external view returns (UserOutcomeInfo[] memory);
+    function getUserPredictionState() external view returns (UserOutcomeInfo[] memory);
 
     function getReward() external;
 

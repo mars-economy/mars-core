@@ -117,13 +117,13 @@ describe("Prediction Market", async () => {
 
     await checkBalances([users[0], users[1]], [9000, 9000])
 
-    console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress()))
-    console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress()))
+    console.log("user0", await predictionMarket.getUserPredictionState())
+    console.log("user1", await predictionMarket.getUserPredictionState())
 
     expect(await predictionMarket.connect(users[0]).getReward()).to.be.ok
     expect(await predictionMarket.connect(users[1]).getReward()).to.be.ok
 
-    await checkBalances([users[0], users[1]], [11000, 9000])
+    await checkBalances([users[0], users[1]], [10994, 9000])
   })
 
   //   it("Should get reward without governance voting if consensus reached and win correct number of tokens", async () => {
