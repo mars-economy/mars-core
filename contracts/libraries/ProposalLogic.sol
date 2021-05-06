@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 library ProposalLogic {
     // function isDeclined(Proposal proposal, uint256 quorum) internal returns(bool) {
     //         return (100 *

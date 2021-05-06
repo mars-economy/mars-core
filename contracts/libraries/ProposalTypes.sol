@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 library ProposalTypes {
     enum Vote {NONE, YES, NO, ABSTAIN}
 

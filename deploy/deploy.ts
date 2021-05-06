@@ -24,7 +24,7 @@ async function deployGovToken(wethAddress: string) {
 
 async function deployMarsToken(wethAddress: string) {
   const MarsToken = await ethers.getContractFactory("MarsERC20Token")
-  const marsToken = await MarsToken.deploy(1_000_000_000 * 10 ** 18, "Test marsToken", 18, "DMT")
+  const marsToken = await MarsToken.deploy(BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18)), "Test marsToken", 18, "DMT")
   await marsToken.deployed()
   console.log("marsToken:", marsToken.address)
   ADDR["marsToken"] = marsToken.address
@@ -236,19 +236,19 @@ async function populateMarkets() {
 async function main() {
   //ADDR["govToken"] = '0x3bBBB30f880cDC6a611411c00df05024504c306d'
   //ADDR["governance"] = '0x027AF35e1617Be2eCEfB02057EB93Abc9467A615'
-  ADDR["daiToken"] = "0x8Cc71938F07dFa9549B70a545eEB8FE40c9FD258"
-  ADDR["marsToken"] = "0xb35B7e4C616C06A6f37c436D6e5231B6a34694c0"
-  ADDR["settlement"] = "0xF9691e47D0fC81dFBCbAca30ddADe46502e4E9b0"
-  ADDR["predictionMarketFactory"] = "0xCbE287517a229fa308960251aA30b55abA7E1fE3"
+  //ADDR["daiToken"] = "0x8Cc71938F07dFa9549B70a545eEB8FE40c9FD258"
+  //ADDR["marsToken"] = "0xb35B7e4C616C06A6f37c436D6e5231B6a34694c0"
+  //ADDR["settlement"] = "0xF9691e47D0fC81dFBCbAca30ddADe46502e4E9b0"
+  //ADDR["predictionMarketFactory"] = "0xCbE287517a229fa308960251aA30b55abA7E1fE3"
 
   // const governanceRouter = await deployGovernanceRouter(wethAddress[network.name]);
   //   await deployGovToken("")
   //   await deployGovernance("")
 
   //   await deployDaiToken("")
-  //   await deployMarsToken("")
-  //   await deploySettlement("")
-  //await deployFactory("") //Factory.deploy(ADDR["marsToken"], ADDR["settlement"])
+  await deployMarsToken("")
+  await deploySettlement("")
+  await deployFactory("") //Factory.deploy(ADDR["marsToken"], ADDR["settlement"])
 
   //await governance.setSettlement(settlement.address)
   //await predictionMarket.connect(owner).setSettlement(settlement.address)
