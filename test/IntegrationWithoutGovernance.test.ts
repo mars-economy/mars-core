@@ -117,8 +117,8 @@ describe("Prediction Market", async () => {
 
     await checkBalances([users[0], users[1]], [9000, 9000])
 
-    console.log("user0", await predictionMarket.getUserPredictionState())
-    console.log("user1", await predictionMarket.getUserPredictionState())
+    console.log("user0", await predictionMarket.connect(await users[0].getAddress()).getUserPredictionState())
+    console.log("user1", await predictionMarket.connect(await users[1].getAddress()).getUserPredictionState())
 
     expect(await predictionMarket.connect(users[0]).getReward()).to.be.ok
     expect(await predictionMarket.connect(users[1]).getReward()).to.be.ok
