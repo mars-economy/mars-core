@@ -1,18 +1,9 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
 import "../libraries/Market.sol";
 
-
 interface IPredictionMarket {
-    struct UserOutcomeInfo {
-        bytes16 outcomeUuid;
-        bool suspended;
-        uint256 stakeAmount;
-        uint256 currentReward;
-        bool rewardReceived;
-    }
-
     event PredictionEvent(address indexed _account, bytes16 _outcome, uint256 _amount);
 
     function getNumberOfOutcomes() external view returns (uint256);
@@ -31,7 +22,7 @@ interface IPredictionMarket {
 
     function getTokens() external view returns (address[] memory);
 
-    function getUserPredictionState(address _user) external view returns (UserOutcomeInfo[] memory);
+    function getUserPredictionState() external view returns (Market.UserOutcomeInfo[] memory);
 
     function getReward() external;
 

@@ -1,28 +1,30 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
-import "./interfaces/IPredictionMarket.sol";
-import "./interfaces/IShareToken.sol";
-import "./dependencies/tokens/MarsERC20OutcomeToken.sol";
-import "./Settlement.sol";
-import "./Owned.sol";
-import "./libraries/Market.sol";
+// import "./dependencies/libraries/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+// import "./dependencies/libraries/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+import "./dependencies/tokens/MarsERC20OutcomeToken.sol";
+import "./interfaces/IPredictionMarket.sol";
+import "./Settlement.sol";
+import "./libraries/Market.sol";
 
 import "hardhat/console.sol"; //TODO: REMOVE
 
-contract MarsPredictionMarket is IPredictionMarket, Owned {
+contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgradeable {
     bytes16[] public outcomes;
     //list of outcomes
     address[] public outcomeTokens;
     //list of tokens
 
-    uint256 public immutable predictionTimeEnd; //when buying stops
+    uint256 public predictionTimeEnd; //when buying stops
     uint256 public predictionMarketBalancingStart; //when 80:20 balancing beings, not yet implemented, should be immutable
-    address public immutable token; //DAI or some other stable ERC20 token used to buy shares for outcomes
+    address public token; //DAI or some other stable ERC20 token used to buy shares for outcomes
     bytes16 public winningOutcome;
-    uint256 public fee = 9970; // 0.03%, 100 = 1%
-    uint256 public feeDivisor = 10000;
+    uint256 public fee;
+    uint256 public feeDivisor;
 
     mapping(bytes16 => address) public tokenOutcomeAddress;
     //outcome => address of token
@@ -33,11 +35,19 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
     Settlement settlement;
     address governance;
 
-    constructor(
+    // initializer onlyOwner
+    function initialize(
         address _token,
         uint256 _predictionTimeEnd,
-        address _settlement
-    ) Owned(msg.sender) {
+        address _settlement,
+        Market.Outcome[] memory outcomes
+    ) external initializer {
+        __Ownable_init();
+
+        for (uint256 i = 0; i < outcomes.length; i++) {
+            _addOutcome(outcomes[i].uuid, outcomes[i].position, outcomes[i].name);
+        }
+
         predictionTimeEnd = _predictionTimeEnd;
         // predictionContractEnd // ADDME
         // predictionMarketBalancingStart // ADDME
@@ -46,26 +56,29 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
         token = _token;
 
         governance = msg.sender;
+        fee = 9970; // 0.3%, 100 = 1%
+        feeDivisor = 10000;
     }
 
-    function getUserPredictionState(address _user) external view override returns (UserOutcomeInfo[] memory) {
-        UserOutcomeInfo[] memory app = new UserOutcomeInfo[](outcomes.length);
+    // function collect() {
+    //     if oracle;
+    //     if owner;
+    // }
+
+    function getUserPredictionState() external view override returns (Market.UserOutcomeInfo[] memory) {
+        Market.UserOutcomeInfo[] memory app = new Market.UserOutcomeInfo[](outcomes.length);
 
         for (uint256 i = 0; i < outcomes.length; i++) {
             app[i].outcomeUuid = outcomes[i];
-            app[i].stakeAmount = IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(_user);
-            uint totalSupply = IERC20(tokenOutcomeAddress[outcomes[i]]).totalSupply();
-			if (totalSupply != 0){
-                uint256 amount =
-                    ((IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(_user) * totalPredicted) /
-                        IERC20(tokenOutcomeAddress[outcomes[i]]).totalSupply());
-                app[i].currentReward = (amount * fee) / feeDivisor;
+            app[i].stakeAmount = IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(msg.sender);
+            uint256 totalSupply = IERC20(tokenOutcomeAddress[outcomes[i]]).totalSupply();
+            if (totalSupply != 0) {
+                uint256 amount = (IERC20(tokenOutcomeAddress[outcomes[i]]).balanceOf(msg.sender) * totalPredicted) / totalSupply;
+                if (winningOutcome == bytes16(0) || winningOutcome == outcomes[i]) app[i].currentReward = amount;
             }
             //else app[i].currentReward = 0, but that goes by default
-            app[i].rewardReceived = outcomes[i] == winningOutcome ? claimed[_user] : false;
-
+            app[i].rewardReceived = outcomes[i] == winningOutcome ? claimed[msg.sender] : false;
         }
-
         return app;
     }
 
@@ -74,10 +87,20 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
         uint8 position,
         string memory name
     ) external override onlyOwner {
+        _addOutcome(uuid, position, name);
+    }
+
+    function _addOutcome(
+        bytes16 uuid,
+        uint8 position,
+        string memory name
+    ) internal {
         outcomes.push(uuid);
-        address newToken = address(new MarsERC20OutcomeToken(string(abi.encodePacked(uuid)), 18, "MPO")); // IERC20(token).decimals
-        outcomeTokens.push(newToken);
-        tokenOutcomeAddress[uuid] = newToken;
+        MarsERC20OutcomeToken newToken = new MarsERC20OutcomeToken(); // IERC20(token).decimals
+        newToken.initialize(string(abi.encodePacked(uuid)), 18, "MPO"); // FIXME: or is this called from deployment script?
+
+        outcomeTokens.push(address(newToken));
+        tokenOutcomeAddress[uuid] = address(newToken);
     }
 
     function getWinningOutcome() internal returns (bytes16) {
@@ -87,7 +110,6 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
 
     function getReward() external override {
         winningOutcome = winningOutcome != bytes16(0) ? winningOutcome : getWinningOutcome();
-        // require(winningOutcome != "", "MARS: PREDICTION IS NOT YET CONCLUDED"); //obsolete?
         require(claimed[msg.sender] == false, "USER ALREADY CLAIMED");
 
         claimed[msg.sender] = true;
@@ -106,6 +128,7 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
             MarsERC20OutcomeToken(tokenOutcomeAddress[winningOutcome]).transferFrom(msg.sender, address(this), currentAmount),
             "MARS: FAILED TO TRANSFER FROM BUYER"
         );
+
         require(IERC20(token).transfer(msg.sender, reward), "MARS: FAILED TO TRANSFER TO BUYER");
     }
 
@@ -166,12 +189,8 @@ contract MarsPredictionMarket is IPredictionMarket, Owned {
     }
 
     modifier outcomeDefined(bytes16 _outcome) {
-        require(!_outcomeDefined(_outcome), "MARS: OUTCOME NOT DEFINED");
+        require(tokenOutcomeAddress[_outcome] != address(0), "MARS: OUTCOME NOT DEFINED");
         _;
-    }
-
-    function _outcomeDefined(bytes16 _outcome) internal view returns (bool) {
-        return tokenOutcomeAddress[_outcome] == address(0);
     }
 
     function setSettlement(address _newSettlement) external override {

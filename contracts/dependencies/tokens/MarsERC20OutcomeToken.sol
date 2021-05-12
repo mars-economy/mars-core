@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+// import "../libraries/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+// import "../libraries/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./IERC20.sol";
 
-contract MarsERC20OutcomeToken is IERC20 {
+contract MarsERC20OutcomeToken is IERC20, Initializable, OwnableUpgradeable {
     event Mint(address indexed _to, uint256 _value, uint256 _totalSupply);
-    address governor;
 
     uint256 private constant MAX_UINT256 = 2**256 - 1;
     mapping(address => uint256) public balances;
@@ -16,12 +20,12 @@ contract MarsERC20OutcomeToken is IERC20 {
     string public symbol;
     uint256 public override totalSupply;
 
-    constructor(
+    function initialize(
         string memory _tokenName,
         uint8 _decimalUnits,
         string memory _tokenSymbol
-    ) {
-        governor = msg.sender;
+    ) external initializer {
+        __Ownable_init();
         name = _tokenName; // Set the name for display purposes
         decimals = _decimalUnits; // Amount of decimals for display purposes
         symbol = _tokenSymbol; // Set the symbol for display purposes
@@ -51,9 +55,7 @@ contract MarsERC20OutcomeToken is IERC20 {
         return true;
     }
 
-    function mint(address _to, uint256 _value) external returns (bool success) {
-        require(msg.sender == governor, "ONLY GOVERNOR CAN MINT TOKENS");
-
+    function mint(address _to, uint256 _value) external onlyOwner returns (bool success) {
         totalSupply += _value;
         balances[_to] += _value;
 

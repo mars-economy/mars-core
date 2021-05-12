@@ -4,6 +4,9 @@ import { BigNumber, Contract } from "ethers"
 import { LogDescription } from "ethers/lib/utils"
 import fs from "fs"
 
+import hre from "hardhat"
+import { MarsERC20Token } from "../typechain"
+
 var ADDR = {
   daiToken: "",
   marsToken: "",
@@ -22,13 +25,58 @@ async function deployGovToken(wethAddress: string) {
   return govToken.address
 }
 
+// async function deployMarsToken(wethAddress: string) {
+//   const MarsToken = await ethers.getContractFactory("MarsERC20Token")
+//   const marsToken = await MarsToken.deploy()
+//   await marsToken.initialize(BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18)), "Test marsToken", 18, "DMT")
+
+//   await marsToken.deployed()
+//   console.log("marsToken:", marsToken.address)
+//   ADDR["marsToken"] = marsToken.address
+//   return marsToken.address
+// }
+
 async function deployMarsToken(wethAddress: string) {
   const MarsToken = await ethers.getContractFactory("MarsERC20Token")
-  const marsToken = await MarsToken.deploy(BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18)), "Test marsToken", 18, "DMT")
+  // const marsToken = await MarsToken.deploy()
+  
+  const marsToken = await hre.upgrades.deployProxy(MarsToken, [BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18)), "Test marsToken", 18, "DMT"], {initializer: "initialize"})
+
   await marsToken.deployed()
   console.log("marsToken:", marsToken.address)
   ADDR["marsToken"] = marsToken.address
   return marsToken.address
+}
+
+async function testMars() {
+  let addr = "0x22cabD17a710fa04383C7EcE5B33014d231630Dd"
+  const MarsToken = await ethers.getContractFactory("MarsERC20Token")
+  const mars = MarsToken.attach(addr) as MarsERC20Token
+  console.log("Owner:", await mars.owner())
+  console.log("Symbool:", await mars.symbol())
+}
+
+async function testMars2() {
+  let addr = "0x22cabD17a710fa04383C7EcE5B33014d231630Dd"
+  const MarsToken = await ethers.getContractFactory("MarsERC20Token")
+  const mars = MarsToken.attach(addr) as MarsERC20Token
+  console.log("Owner:", await mars.owner())
+  console.log("Symbool:", await mars.symbol())
+  console.log("wqerty:", await mars.wqerty())
+}
+
+async function upgradeMarsToken() {
+
+  let addr = "0x22cabD17a710fa04383C7EcE5B33014d231630Dd"
+  const MarsToken = await ethers.getContractFactory("MarsERC20Token")
+  const mars = MarsToken.attach(addr) as MarsERC20Token
+  
+
+  const marsToken = await hre.upgrades.upgradeProxy(addr, MarsToken)
+
+  await marsToken.deployed()
+  console.log("marsToken:", marsToken.address)
+  ADDR["marsToken"] = marsToken.address
 }
 
 async function deployDaiToken(wethAddress: string) {
@@ -246,18 +294,22 @@ async function main() {
   //   await deployGovernance("")
 
   //   await deployDaiToken("")
-  await deployMarsToken("")
-  await deploySettlement("")
-  await deployFactory("") //Factory.deploy(ADDR["marsToken"], ADDR["settlement"])
+  // await deployMarsToken("")
+  // await deploySettlement("")
+  // await deployFactory("") //Factory.deploy(ADDR["marsToken"], ADDR["settlement"])
+
+  await testMars()
+  await upgradeMarsToken()
+  await testMars2()
 
   //await governance.setSettlement(settlement.address)
   //await predictionMarket.connect(owner).setSettlement(settlement.address)
   //await governance.connect(owner).setFactory(predictionMarketFactory.address)
 
-  await populateMarkets()
+  // await populateMarkets()
 
   try {
-    fs.writeFileSync("contract-addresses.json", JSON.stringify(ADDR, null, "\t"))
+    // fs.writeFileSync("contract-addresses.json", JSON.stringify(ADDR, null, "\t"))
   } catch {
     console.log("Failed to create addresses file")
   }

@@ -2,16 +2,24 @@ import { HardhatUserConfig } from "hardhat/types"
 import "@nomiclabs/hardhat-etherscan"
 import "@nomiclabs/hardhat-ethers"
 import "@nomiclabs/hardhat-waffle"
+import "@openzeppelin/hardhat-upgrades"
+
 import { privateKey, marsKey } from "./wallet"
 
 import "solidity-coverage"
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.2",
-    settings: {
-      optimizer: { enabled: true, runs: 2000 },
-    },
+    compilers: [
+      {
+        version: "0.8.2",
+        settings: {
+          optimizer: { enabled: true, runs: 2000 },
+        },
+      }
+    ]
+
+
   },
   networks: {
     bsctestnet: {

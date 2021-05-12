@@ -6,6 +6,15 @@ interface ISettlement {
     event OracleAcceptedEvent(address _newOracle, uint256 _sum);
     event OracleVotedEvent(address _oracle, address _predictionMarket, bytes16 _outcome);
 
+    struct MarketStatus {
+        bytes16[] outcomes;
+        uint256 votingEnd;
+        uint256 oraclesVoted;
+        bytes16 winningOutcome;
+        bool finalized;
+        bool startedDispute;
+    }
+
     function registerMarket(
         address _predictionMarket,
         bytes16[] memory _outcomes,
@@ -26,7 +35,11 @@ interface ISettlement {
 
     function withdraw() external;
 
-    // function setWinningOutcome(address _predictionMarket, bytes16 _outcome) public;
+    // function reachedConsensus(address _predictionMarket) public view returns (bool);
+
+    function setWinningOutcomeByGovernance(address _predictionMarket, bytes16 _outcome) external;
+
+    // function finalizeOutcome(address _predictionMarket) public;
 
     function getWinningOutcome(address _predictionMarket) external returns (bytes16);
 

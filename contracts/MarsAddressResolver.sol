@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "./interfaces/IAddressResolver.sol";
-import "./Owned.sol";
+// import "./dependencies/libraries/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract MarsAddressResolver is IAddressResolver, Owned {
+import "./interfaces/IAddressResolver.sol";
+
+contract MarsAddressResolver is IAddressResolver, OwnableUpgradeable {
     mapping(bytes32 => address) public repository;
 
-    constructor(address governor) Owned(governor) {}
+    // constructor(address governor)  {}
 
     function getAddress(bytes32 name) external view override returns (address) {
         return repository[name];

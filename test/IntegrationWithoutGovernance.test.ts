@@ -21,7 +21,6 @@ describe("Prediction Market", async () => {
   let predictionMarketFactory: MarsPredictionMarketFactory
   let daiToken: ERC20
   let marsToken: ERC20
-  let govToken: ERC20
   let settlement: Settlement
 
   const initialBalance = 10_000
@@ -46,11 +45,15 @@ describe("Prediction Market", async () => {
 
     settlement = (await (await ethers.getContractFactory("Settlement"))
       .connect(owner)
-      .deploy(marsToken.address, await owner.getAddress())) as Settlement
+      .deploy()) as Settlement
+
+    settlement.connect(owner).initialize(marsToken.address)
 
     predictionMarketFactory = (await (await ethers.getContractFactory("MarsPredictionMarketFactory"))
       .connect(owner)
-      .deploy(await owner.getAddress(), settlement.address)) as MarsPredictionMarketFactory
+      .deploy()) as MarsPredictionMarketFactory
+    
+    predictionMarketFactory.connect(owner).initialize(await owner.getAddress(), settlement.address)
   })
 
   it("Can create market, oracle, and vote for new outcome, both vote yes", async () => {
@@ -74,18 +77,26 @@ describe("Prediction Market", async () => {
     await settlement.connect(oracle2_).acceptAndStake()
     expect((await settlement.getOracles()).length).to.be.equal(2)
 
-    let tx = await predictionMarketFactory.connect(owner).createMarket(MILESTONE, 1, "Example", "Example", daiToken.address, timeEnd)
+    //first way to add outcomes
+    let tx = await predictionMarketFactory.connect(owner).createMarket(
+      MILESTONE, 1, "Example", "Example", daiToken.address, timeEnd, 
+      [{uuid: YES, name: "YES", position: 1}]
+    )
+
+    // getting market address from event
     let rx = await tx.wait()
+    let _newMarket = rx.events![2].args!.contractAddress
 
-    let _newMarket = rx.events![1].args!.contractAddress // getting address from event
-
-    await predictionMarketFactory.connect(owner).addOutcome(_newMarket, YES, 1, "YES")
+    //second way to add outcomes
     await predictionMarketFactory.connect(owner).addOutcome(_newMarket, NO, 2, "NO")
 
     await settlement.connect(owner).registerMarket(_newMarket, [YES, NO], timeEnd)
 
     predictionMarket = MarsPredictionMarket__factory.connect(_newMarket, owner)
     expect(await predictionMarket.getNumberOfOutcomes()).to.be.equal(2)
+
+    let yesToken = ERC20__factory.connect((await predictionMarket.getTokens())[0], owner)
+    let noToken = ERC20__factory.connect((await predictionMarket.getTokens())[1], owner)
 
     expect(await settlement.reachedConsensus(_newMarket)).to.be.equal(false)
 
@@ -107,23 +118,28 @@ describe("Prediction Market", async () => {
     await expect(predictionMarket.connect(users[0]).getReward()).to.be.revertedWith("PREDICTION IS NOT YET CONCLUDED")
 
     expect(await settlement.reachedConsensus(_newMarket)).to.be.equal(true)
+    
+    console.log("user0", await predictionMarket.connect(users[0]).getUserPredictionState())
+    // console.log(await yesToken.balanceOf(await users[0].getAddress()))
+    // console.log(await noToken.balanceOf(await users[0].getAddress()))
+    console.log("user1", await predictionMarket.connect(users[1]).getUserPredictionState())
+    // console.log(await yesToken.balanceOf(await users[1].getAddress()))
+    // console.log(await noToken.balanceOf(await users[1].getAddress()))
+    
     await wait(ethers, 60 * 60 * 24 * 8)
-
-    let yesToken = ERC20__factory.connect((await predictionMarket.getTokens())[0], owner)
-    let noToken = ERC20__factory.connect((await predictionMarket.getTokens())[1], owner)
 
     await yesToken.connect(users[0]).approve(predictionMarket.address, 1000)
     await noToken.connect(users[1]).approve(predictionMarket.address, 1000)
 
     await checkBalances([users[0], users[1]], [9000, 9000])
 
-    console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress()))
-    console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress()))
+    console.log("user0", await predictionMarket.getUserPredictionState())
+    console.log("user1", await predictionMarket.getUserPredictionState())
 
     expect(await predictionMarket.connect(users[0]).getReward()).to.be.ok
     expect(await predictionMarket.connect(users[1]).getReward()).to.be.ok
 
-    await checkBalances([users[0], users[1]], [11000, 9000])
+    await checkBalances([users[0], users[1]], [10994, 9000])
   })
 
   //   it("Should get reward without governance voting if consensus reached and win correct number of tokens", async () => {

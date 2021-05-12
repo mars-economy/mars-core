@@ -1,85 +1,66 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+// import "../libraries/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+// import "../libraries/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./IERC20.sol";
+import "./IMarsERC20.sol";
 
-contract MarsERC20Token is IERC20 {
-    event Mint(address indexed _to, uint256 _value, uint256 indexed _option);
-
+contract MarsERC20Token is IMarsERC20, Initializable, OwnableUpgradeable {
     uint256 private constant MAX_UINT256 = 2**256 - 1;
     mapping(address => uint256) public balances;
     mapping(address => mapping(address => uint256)) public allowed;
     mapping(address => uint256) public lockedUntil;
+    mapping(Option => uint256) fundsLeft;
 
-    string public name;
+    uint256 public override totalSupply;
     uint8 public decimals;
     string public symbol;
-    uint256 public override totalSupply;
+    string public name;
 
-    address owner;
+    uint256 lockPeriod;
 
-    uint256 coreTeam = 20_000_000 * 10**decimals;
-    uint256 strategicinvestors = 15_000_000 * 10**decimals;
-    uint256 ecosystem = 10_000_000 * 10**decimals;
-    uint256 fundraising = 2_000_000 * 10**decimals;
-    uint256 common = 1_000_000 * 10**decimals;
-
-    uint256 coreTeamMinted;
-    uint256 strategicinvestorsMinted;
-    uint256 ecosystemMinted;
-    uint256 fundraisingMinted;
-    uint256 commonMinted;
-
-    uint256 lockPeriod = 7 days;
-
-    //can change to enum
     function transferLocked(
         address _to,
         uint256 _value,
-        uint256 _option
-    ) external returns (bool success) {
-        require(msg.sender == owner, "ONLY OWNER CAN MINT TOKENS");
+        Option _option
+    ) external override onlyOwner returns (bool success) {
+        require(balances[address(this)] >= _value);
 
-        require(balances[msg.sender] >= _value);
-
-        if (_option == 0) {
-            require(coreTeam > coreTeamMinted + _value);
-            coreTeamMinted += _value;
-        } else if (_option == 1) {
-            require(strategicinvestors > strategicinvestorsMinted + _value);
-            strategicinvestorsMinted += _value;
-        } else if (_option == 2) {
-            require(ecosystem > ecosystemMinted + _value);
-            ecosystemMinted += _value;
-        } else if (_option == 3) {
-            require(fundraising > fundraisingMinted + _value);
-            fundraisingMinted += _value;
-        } else if (_option == 4) {
-            require(common > commonMinted + _value);
-            commonMinted += _value;
+        require(fundsLeft[_option] - _value >= 0);
+        if (_option == Option.CORE_TEAM) {
+            lockedUntil[_to] = lockPeriod;
         }
 
-        balances[msg.sender] -= _value;
+        balances[address(this)] -= _value;
         balances[_to] += _value;
-        lockedUntil[_to] = block.timestamp + lockPeriod;
 
         emit Mint(_to, _value, _option);
         return true;
     }
 
-    constructor(
+    function initialize(
         uint256 _initialAmount,
         string memory _tokenName,
         uint8 _decimalUnits,
         string memory _tokenSymbol
-    ) {
-        balances[msg.sender] = _initialAmount; // Give the creator all initial tokens
+    ) external initializer {
+        __Ownable_init();
+
         totalSupply = _initialAmount; // Update total supply
         name = _tokenName; // Set the name for display purposes
         decimals = _decimalUnits; // Amount of decimals for display purposes
         symbol = _tokenSymbol; // Set the symbol for display purposes
+        lockPeriod = 1683774000; //Thu May 11 2023 06:00:00 GMT+0300 (Moscow Standard Time)
 
-        owner = msg.sender;
+        fundsLeft[Option.CORE_TEAM] = 100_000_000 * 10**decimals;
+        fundsLeft[Option.STRATEGIC_INVESTORS] = 100_000_000 * 10**decimals;
+        fundsLeft[Option.ECOSYSTEM] = 350_000_000 * 10**decimals;
+        fundsLeft[Option.FUNDRASING] = 50_000_000 * 10**decimals;
+        fundsLeft[Option.COMMON_POOL] = 400_000_000 * 10**decimals;
     }
 
     function transfer(address _to, uint256 _value) external override returns (bool success) {
@@ -125,6 +106,4 @@ contract MarsERC20Token is IERC20 {
     function allowance(address _owner, address _spender) external view override returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
-
-    function setGovernance(address _governor) external {}
 }
