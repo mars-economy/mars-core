@@ -4,7 +4,8 @@ pragma solidity >=0.8.0 <0.9.0;
 interface ISettlement {
     event PotentialOracleEvent(address _newOracle);
     event OracleAcceptedEvent(address _newOracle, uint256 _sum);
-    event OracleVotedEvent(address _oracle, address _predictionMarket, bytes16 _outcome);
+    event OracleVotedEvent(address indexed _oracle, address indexed _predictionMarket, bytes16 _outcome);
+    event OutcomeDefinedEvent(address indexed _predictionMarket, bytes16 _outcome);
 
     struct MarketStatus {
         bytes16[] outcomes;

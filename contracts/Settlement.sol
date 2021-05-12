@@ -173,6 +173,9 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
 
         marketStatus[_predictionMarket].winningOutcome = _outcome;
         marketStatus[_predictionMarket].finalized = true;
+
+        emit OutcomeDefinedEvent(_predictionMarket, _outcome);
+
         punishOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);
 
         if (marketStatus[_predictionMarket].startedDispute == true) {
@@ -195,7 +198,10 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         ) {
             marketStatus[_predictionMarket].winningOutcome = oracleOutcome[oracles[0]][_predictionMarket];
             marketStatus[_predictionMarket].finalized = true;
-            // marketStatus[_predictionMarket].startedDispute = false;
+            marketStatus[_predictionMarket].startedDispute = false;
+
+            emit OutcomeDefinedEvent(_predictionMarket, oracleOutcome[oracles[0]][_predictionMarket]);
+
             punishOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);
             // if (marketStatus[_predictionMarket].startedDispute == true) { //not sure if needed
             //     startedDisputes -= 1;
