@@ -12,7 +12,6 @@ contract MarsERC20Token is IMarsERC20, ERC20, Ownable {
     mapping(uint256 => uint256) public fundsLeft;
 
     uint256 lockPeriod;
-    address emissionController;
 
     function mint(
         address _to,
@@ -28,18 +27,6 @@ contract MarsERC20Token is IMarsERC20, ERC20, Ownable {
 
         _mint(_to, _amount);
         emit MarsMint(_to, _amount, _option);
-    }
-
-    function mint(address _to, uint256 _amount) external override {
-        require(msg.sender == emissionController && emissionController != address(0), "Only Emission Controller can mint");
-
-        _mint(_to, _amount);
-    }
-
-    function burn(address _from, uint256 _amount) external override {
-        require(msg.sender == emissionController && emissionController != address(0), "Only Emission Controller can burn");
-
-        _burn(_from, _amount);
     }
 
     constructor(
