@@ -58,15 +58,7 @@ contract MarsERC20Token is IMarsERC20, ERC20, Ownable {
         lockPeriod = _newValue;
     }
 
-    function setEmissionController(address _addr) external override onlyOwner {
-        emissionController = _addr;
-    }
-
     function getLockPeriod() external view override returns (uint256) {
         return lockPeriod;
-    }
-
-    function getEmissionController() external view override returns (address) {
-        return emissionController;
     }
 }
