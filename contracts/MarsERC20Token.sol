@@ -2,44 +2,53 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./dependencies/tokens/IMarsERC20.sol";
 
-contract MarsERC20Token is IMarsERC20, Initializable, ERC20Upgradeable, OwnableUpgradeable {
+contract MarsERC20Token is IMarsERC20, ERC20, Ownable {
     mapping(address => uint256) public lockedAmount;
     mapping(uint256 => uint256) fundsLeft;
 
-    uint256 public lockPeriod;
+    uint256 lockPeriod;
+    address emissionController;
 
     function mint(
         address _to,
-        uint256 _value,
+        uint256 _amount,
         uint256 _option
-    ) external override onlyOwner returns (bool success) {
-        require(fundsLeft[_option] >= _value);
+    ) external override onlyOwner {
+        require(fundsLeft[_option] >= _amount);
 
-        fundsLeft[_option] -= _value;
+        fundsLeft[_option] -= _amount;
         if (_option == 0) {
-            lockedAmount[_to] += _value;
+            lockedAmount[_to] += _amount;
         }
 
-        _mint(_to, _value);
-        emit MarsMint(_to, _value, _option);
-
-        return true;
+        _mint(_to, _amount);
+        emit MarsMint(_to, _amount, _option);
     }
 
-    function initialize(
+    function mint(address _to, uint256 _amount) external override {
+        require(msg.sender == emissionController && emissionController != address(0), "ONLY Emission Controller can mint");
+
+        _mint(_to, _amount);
+    }
+
+    function burn(address _from, uint256 _amount) external override {
+        require(msg.sender == emissionController, "ONLY Emission Controller can mint");
+
+        _burn(_from, _amount);
+    }
+
+    constructor(
         string memory _tokenName,
         string memory _tokenSymbol,
         uint256 _lockPeriod
-    ) external initializer {
-        __Ownable_init();
-        __ERC20_init(_tokenName, _tokenSymbol);
+    ) ERC20(_tokenName, _tokenSymbol) {
+        // __Ownable_init();
+        // __ERC20_init(_tokenName, _tokenSymbol);
 
         lockPeriod = _lockPeriod;
 
@@ -63,5 +72,17 @@ contract MarsERC20Token is IMarsERC20, Initializable, ERC20Upgradeable, OwnableU
 
     function setLockPeriod(uint256 _newValue) external override onlyOwner {
         lockPeriod = _newValue;
+    }
+
+    function setEmissionController(address _addr) external override onlyOwner {
+        emissionController = _addr;
+    }
+
+    function getLockPeriod() external view override returns (uint256) {
+        return lockPeriod;
+    }
+
+    function getEmissionController() external view override returns (address) {
+        return emissionController;
     }
 }
