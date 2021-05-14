@@ -9,7 +9,7 @@ import "./dependencies/tokens/IMarsERC20.sol";
 
 contract MarsERC20Token is IMarsERC20, ERC20, Ownable {
     mapping(address => uint256) public lockedAmount;
-    mapping(uint256 => uint256) fundsLeft;
+    mapping(uint256 => uint256) public fundsLeft;
 
     uint256 lockPeriod;
     address emissionController;
@@ -31,13 +31,13 @@ contract MarsERC20Token is IMarsERC20, ERC20, Ownable {
     }
 
     function mint(address _to, uint256 _amount) external override {
-        require(msg.sender == emissionController && emissionController != address(0), "ONLY Emission Controller can mint");
+        require(msg.sender == emissionController && emissionController != address(0), "Only Emission Controller can mint");
 
         _mint(_to, _amount);
     }
 
     function burn(address _from, uint256 _amount) external override {
-        require(msg.sender == emissionController, "ONLY Emission Controller can mint");
+        require(msg.sender == emissionController && emissionController != address(0), "Only Emission Controller can burn");
 
         _burn(_from, _amount);
     }
@@ -47,9 +47,6 @@ contract MarsERC20Token is IMarsERC20, ERC20, Ownable {
         string memory _tokenSymbol,
         uint256 _lockPeriod
     ) ERC20(_tokenName, _tokenSymbol) {
-        // __Ownable_init();
-        // __ERC20_init(_tokenName, _tokenSymbol);
-
         lockPeriod = _lockPeriod;
 
         fundsLeft[0] = 100_000_000 * 1 ether;
