@@ -1,6 +1,5 @@
-// import { ethers, upgrades } from "hardhat"
-
-const { ethers, upgrades } = require("hardhat");
+import { ethers, upgrades } from "hardhat"
+// const { ethers, upgrades } = require("hardhat");
 
 import { expect } from "chai"
 import { Contract, Signer } from "ethers"
@@ -55,7 +54,7 @@ describe("MarsERC20Token", async () => {
   })
 
   it("EmissionController can transfer as much as he wants", async () => {
-    let errorMessage = "ONLY Emission Controller can mint"
+    let errorMessage = "Only Emission Controller can mint"
     let eC = users[5]
     let eCa = await users[5].getAddress()
 

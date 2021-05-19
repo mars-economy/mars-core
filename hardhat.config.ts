@@ -34,6 +34,13 @@ const config: HardhatUserConfig = {
       chainId: 56,
       gasPrice: 20000000000,
     },
+    // hardhat: {
+    //   throwOnTransactionFailures: true,
+    //   throwOnCallFailures: true,
+    //   blockGasLimit: 15000000,
+    //   gasMultiplier: 1.5,
+    //   allowUnlimitedContractSize: true,
+    // }
   },
   etherscan: {
     apiKey: marsKey,

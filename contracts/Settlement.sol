@@ -11,8 +11,6 @@ import "./interfaces/IPredictionMarket.sol";
 import "./interfaces/IMarsGovernance.sol";
 import "./interfaces/ISettlement.sol";
 
-import "hardhat/console.sol"; //TODO: REMOVE
-
 contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
     mapping(address => uint256) public staked; //how much a oracle has staked,
     //uint = 1 -> added and not staked,
@@ -43,8 +41,8 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         timeToOpenDispute = 60 * 60 * 24 * 7;
         votingPeriod = 60 * 60 * 24;
 
-        oracleAcceptanceAmount = 1_000_000; // * 10**18;
-        disputeFeeAmount = 100_000; // * 10**18;
+        oracleAcceptanceAmount = 1_000_000 ether;
+        disputeFeeAmount = 100_000 ether;
     }
 
     function registerMarket(
@@ -99,7 +97,6 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         require(block.timestamp > marketStatus[_predictionMarket].votingEnd, "VOTING PERIOD HASN'T ENDED YET");
         require(block.timestamp < marketStatus[_predictionMarket].votingEnd + votingPeriod, "VOTING PERIOD HAS ENDED");
 
-        //TODO: check if vote is defined, another mapping?
         marketStatus[_predictionMarket].oraclesVoted = marketStatus[_predictionMarket].oraclesVoted + 1;
 
         oracleOutcome[msg.sender][_predictionMarket] = _outcome;
@@ -139,6 +136,8 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
     function reachedConsensus(address _predictionMarket) public view returns (bool) {
         if (marketStatus[_predictionMarket].oraclesVoted != oracles.length) return false;
 
+        if (oracles.length == 0) return false;
+
         for (uint256 i = 1; i < oracles.length; i++) {
             if (
                 oracleOutcome[oracles[i - 1]][_predictionMarket] != oracleOutcome[oracles[i]][_predictionMarket] &&
@@ -153,7 +152,7 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
     function punishOracles(address _predictionMarket, bytes16 _trueOutcome) internal {
         for (uint256 i = 0; i < oracles.length; i++)
             if (oracleOutcome[oracles[i]][_predictionMarket] != marketStatus[_predictionMarket].winningOutcome) {
-                staked[oracles[i]] = 1;
+                staked[oracles[i]] = 0;
             }
         //TODO: add reward system for user that started dispute
     }
@@ -162,7 +161,7 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         require(oracles.length > 1, "LAST ORACLE CAN'T LEAVE");
         require(startedDisputes == 0, "ACTIVE DISPUTES IN PROGRESS");
 
-        staked[msg.sender] = 1; //security reason
+        staked[msg.sender] = 1;
         require(IERC20(marsToken).transferFrom(address(this), msg.sender, staked[msg.sender]), "FAILED TO TRANSFER AMOUNT");
     }
 
@@ -189,17 +188,15 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         if (marketStatus[_predictionMarket].finalized == true) {
             return;
         }
-
         if (
             marketStatus[_predictionMarket].votingEnd + votingPeriod + timeToOpenDispute < block.timestamp &&
             marketStatus[_predictionMarket].startedDispute == false &&
-            marketStatus[_predictionMarket].finalized == false &&
+            // marketStatus[_predictionMarket].finalized == false &&
             reachedConsensus(_predictionMarket)
         ) {
             marketStatus[_predictionMarket].winningOutcome = oracleOutcome[oracles[0]][_predictionMarket];
             marketStatus[_predictionMarket].finalized = true;
             marketStatus[_predictionMarket].startedDispute = false;
-
             emit OutcomeDefinedEvent(_predictionMarket, oracleOutcome[oracles[0]][_predictionMarket]);
 
             punishOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);
@@ -219,5 +216,21 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
 
     function getOracles() external view override returns (address[] memory) {
         return oracles;
+    }
+
+    function setOracleAcceptanceAmount(uint256 _newValue) external override onlyOwner {
+        oracleAcceptanceAmount = _newValue;
+    }
+
+    function setDisputeFeeAmount(uint256 _newValue) external override onlyOwner {
+        disputeFeeAmount = _newValue;
+    }
+
+    function setTimeToOpenDispute(uint256 _newValue) external override onlyOwner {
+        timeToOpenDispute = _newValue;
+    }
+
+    function setVotingPeriod(uint256 _newValue) external override onlyOwner {
+        votingPeriod = _newValue;
     }
 }

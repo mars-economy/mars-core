@@ -13,14 +13,13 @@ import "./interfaces/IAddressResolver.sol";
 import "./MarsPredictionMarket.sol";
 import "./libraries/Market.sol";
 
-/*
-    array of outcomes created by initializater() 
-*/
+import "hardhat/console.sol"; //TODO: REMOVE
 
 contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable, OwnableUpgradeable {
     mapping(bytes16 => Category) public categories;
     mapping(bytes16 => Milestone) public milestones;
     mapping(address => PredictionMarket) public predictionMarkets;
+    // address[] markets;
 
     address public addressResolver;
     address settlement;
@@ -38,12 +37,12 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable,
         string calldata name,
         string calldata description
     ) external override onlyOwner {
-        Category memory category;
-        category.position = position;
-        category.name = name;
-        category.description = description;
+        // Category memory category;
+        // category.position = position;
+        // category.name = name;
+        // category.description = description;
 
-        categories[uuid] = category;
+        // categories[uuid] = category;
 
         emit CategoryUpdatedEvent(uuid, position, name, description);
     }
@@ -56,14 +55,14 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable,
         string calldata description,
         MilestoneStatus status
     ) external override onlyOwner {
-        Milestone memory milestone;
-        milestone.categoryUuid = categoryUuid;
-        milestone.position = position;
-        milestone.name = name;
-        milestone.description = description;
-        milestone.status = status;
+        // Milestone memory milestone;
+        // milestone.categoryUuid = categoryUuid;
+        // milestone.position = position;
+        // milestone.name = name;
+        // milestone.description = description;
+        // milestone.status = status;
 
-        milestones[uuid] = milestone;
+        // milestones[uuid] = milestone;
 
         emit MilestoneUpdatedEvent(uuid, categoryUuid, position, name, description, status);
     }
@@ -79,34 +78,38 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable,
     ) external override onlyOwner returns (address) {
         require(dueDate > block.timestamp, "MARS: Invalid prediction market due date");
 
-        PredictionMarket memory market;
-        market.milestoneUuid = milestoneUuid;
-        market.position = position;
-        market.name = name;
-        market.description = description;
+        // PredictionMarket memory market;
+        // market.milestoneUuid = milestoneUuid;
+        // market.position = position;
+        // market.name = name;
+        // market.description = description;
 
-        MarsPredictionMarket predictionMarket = new MarsPredictionMarket();
-        predictionMarket.initialize(token, dueDate, settlement, outcomes);
-        predictionMarkets[address(predictionMarket)] = market;
+        MarsPredictionMarket predictionMarket = MarsPredictionMarket(_createMarketContract(token, dueDate, settlement, outcomes, owner()));
+
+        // predictionMarkets[address(predictionMarket)] = market;
         emit PredictionMarketCreatedEvent(milestoneUuid, position, name, description, token, dueDate, address(predictionMarket));
+        // markets.push(address(predictionMarket));
 
         return address(predictionMarket);
     }
 
-    function _createTokenContract(bytes32 salt) internal returns (address) {
-        bytes memory data =
-            abi.encodeWithSelector(
-                MarsPredictionMarket.initialize.selector
-                // ...
-            );
-        InitializableAdminUpgradeabilityProxy proxy = new InitializableAdminUpgradeabilityProxy{salt: salt}();
-        proxy.initialize(getOrCreateImplementation(type(MarsPredictionMarket).creationCode, "MarsERC20Token"), address(this), data);
+    function _createMarketContract(
+        address token,
+        uint256 dueDate,
+        address settlement,
+        Market.Outcome[] calldata outcomes,
+        address owner
+    ) internal returns (address) {
+        bytes memory data = abi.encodeWithSelector(MarsPredictionMarket.initialize.selector, token, dueDate, settlement, outcomes, owner);
+        InitializableAdminUpgradeabilityProxy proxy = new InitializableAdminUpgradeabilityProxy();
+        proxy.initialize(getOrCreateImplementation(type(MarsPredictionMarket).creationCode, "MARS"), address(this), data);
         return address(proxy);
     }
 
     function getOrCreateImplementation(bytes memory bytecode, bytes32 salt) internal returns (address implementation) {
         bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecode)));
         implementation = address(uint160(uint256(hash)));
+
         if (isContract(implementation)) {
             return implementation;
         }
@@ -128,13 +131,18 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable,
         return size > 0;
     }
 
-    function addOutcome(
-        address predictionMarket,
-        bytes16 uuid,
-        uint8 position,
-        string calldata name
-    ) external override onlyOwner {
-        MarsPredictionMarket(predictionMarket).addOutcome(uuid, position, name);
-        emit OutcomeChangedEvent(uuid, predictionMarket, position, name);
-    }
+    // //Obsolete
+    // function addOutcome(
+    //     address predictionMarket,
+    //     bytes16 uuid,
+    //     uint8 position,
+    //     string calldata name
+    // ) external override onlyOwner {
+    //     MarsPredictionMarket(predictionMarket).addOutcome(uuid, position, name);
+    // emit OutcomeChangedEvent(uuid, predictionMarket, position, name);
+    // }
+
+    // function getMarkets() external view override returns (address[] memory) {
+    //     return markets;
+    // }
 }

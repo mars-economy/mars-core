@@ -16,13 +16,11 @@ interface IPredictionMarket {
         string memory name
     ) external;
 
-    function getBalancingTimeStart() external view returns (uint256);
-
     function predict(bytes16 _outcome, uint256 _amount) external;
 
     function getTokens() external view returns (address[] memory);
 
-    function getUserPredictionState() external view returns (Market.UserOutcomeInfo[] memory);
+    function getUserPredictionState(address _wallet, uint256 _currentTime) external view returns (Market.UserOutcomeInfo[] memory);
 
     function getReward() external;
 

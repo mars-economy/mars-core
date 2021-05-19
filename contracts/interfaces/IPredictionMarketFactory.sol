@@ -74,10 +74,13 @@ interface IPredictionMarketFactory {
         Market.Outcome[] calldata outcomes
     ) external returns (address);
 
-    function addOutcome(
-        address predictionMarket,
-        bytes16 uuid,
-        uint8 position,
-        string calldata name
-    ) external;
+    // //Obsolete
+    // function addOutcome(
+    //     address predictionMarket,
+    //     bytes16 uuid,
+    //     uint8 position,
+    //     string calldata name
+    // ) external;
+
+    // function getMarkets() external view returns (address[] memory);
 }

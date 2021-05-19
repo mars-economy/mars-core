@@ -1,130 +1,75 @@
-import { ethers } from "hardhat"
+import { ethers, upgrades } from "hardhat"
 import { expect } from "chai"
-import { Signer } from "ethers"
-import { bytes32, timeoutAppended, wait } from "./utils/utils"
+import { Contract, Signer } from "ethers"
+import { bytes32, timeout, wait, now, timeoutAppended } from "./utils/utils"
 import {
-  ERC20,
-  ERC20__factory,
+  TestERC20,
   MarsPredictionMarket,
   MarsPredictionMarket__factory,
   MarsPredictionMarketFactory,
-  Settlement,
 } from "../typechain"
+import { setgroups } from "node:process"
+
+import {tokens} from "./utils/utils"
 
 describe("Prediction Market", async () => {
   let owner: Signer
-  let oracle: Signer
   let users: Signer[]
-  let predictionMarketTimeout: number
   let predictionMarket: MarsPredictionMarket
   let predictionMarketFactory: MarsPredictionMarketFactory
-  let token: ERC20
-  const initialBalance = 10_000
-  const YES = bytes32("Yes")
-  const NO = bytes32("No")
-  const UNKNOWN = bytes32("Unknown")
+  let token: TestERC20
 
-  before(async () => {
-    ;[owner, oracle, ...users] = await ethers.getSigners()
-  })
+  let timeEnd: number
+  const YES = ethers.utils.arrayify("0xc53ef995914f4b409b22e6128c2bcf17")
+  const NO = ethers.utils.arrayify("0xc2c2c6cb226b42c4b36bf4b4dcb6ba17")
+  const MILESTONE = ethers.utils.arrayify("0x13a12ea1f1cb4b6e96a3fbdfcf8c9814")
 
   beforeEach(async () => {
-    token = (await (await ethers.getContractFactory("ERC20")).deploy(1_000_000, "Test Token", 18, "TTK")) as ERC20
+    [owner, ...users] = await ethers.getSigners()
+    timeEnd = await timeoutAppended(ethers.provider, 60 * 60 * 24 * 2)
+
+    token = (await (await ethers.getContractFactory("TestERC20")).deploy(tokens(1_000_000), "Test Token", 18, "TTK")) as TestERC20
     for (const user of users) {
-      await token.transfer(await user.getAddress(), initialBalance)
+      await token.transfer(await user.getAddress(), tokens(10_000))
     }
 
     predictionMarketFactory = (await (await ethers.getContractFactory("MarsPredictionMarketFactory"))
-      .connect(owner)
-      .deploy(await owner.getAddress())) as MarsPredictionMarketFactory
+    .connect(owner)
+    .deploy()) as MarsPredictionMarketFactory
+  
+    predictionMarketFactory.connect(owner).initialize(await owner.getAddress(), await owner.getAddress())
 
-    predictionMarketTimeout = await timeoutAppended(ethers.provider, 15)
-    await predictionMarketFactory
-      .connect(owner)
-      .createMarket(token.address, predictionMarketTimeout, "0x2ee51F0bCC1ece7B94091e5E250b08e8276256D9")
+    let tx = await predictionMarketFactory.connect(owner).createMarket(
+      MILESTONE, 1, "Example", "Example", token.address, timeEnd, 
+      [{uuid: YES, name: "YES", position: 1}]
+    )
 
-    let newMarket = (await predictionMarketFactory.connect(owner).getMarkets())[0]
-    predictionMarket = MarsPredictionMarket__factory.connect(newMarket, owner)
-
-    await predictionMarketFactory.connect(owner).addOutcome(predictionMarket.address, YES)
-    await predictionMarketFactory.connect(owner).addOutcome(predictionMarket.address, NO)
+    let rx = await tx.wait()
+    let _newMarket = rx.events![3].args!.contractAddress
+    
+    predictionMarket = MarsPredictionMarket__factory.connect(_newMarket, owner)
   })
 
   specify("Test environment", () => {
     expect(predictionMarket.address).to.be.properAddress
   })
 
+  it.only("Debugging", async () => {
+    console.log(await (await predictionMarket.getSharePrice(await now(ethers.provider))).toString())
+  })
+
   it("Should return specified timeout", async () => {
-    expect(await predictionMarket.getPredictionTimeEnd()).to.equal(predictionMarketTimeout)
+    expect(await predictionMarket.getPredictionTimeEnd()).to.equal(timeEnd)
   })
 
   it("Should return correct number of outcomes", async () => {
+    expect(await predictionMarket.getNumberOfOutcomes()).to.equal(1)
+  })
+
+  it("Should add outcome and return correct number of outcomes", async () => {
+    expect(await predictionMarket.getNumberOfOutcomes()).to.equal(1)
+    await predictionMarket.connect(owner).addOutcome(NO, 2, "NO")
     expect(await predictionMarket.getNumberOfOutcomes()).to.equal(2)
   })
 
-  describe("Predict", async () => {
-    it("Should create correct tokens", async () => {
-      expect((await predictionMarket.getTokens()).length).to.be.equal(2)
-      expect((await predictionMarket.getTokens())[0]).to.be.properAddress
-      expect((await predictionMarket.getTokens())[1]).to.be.properAddress
-
-      let out1 = (await predictionMarket.getTokens())[0]
-      let outcome1 = ERC20__factory.connect(out1, owner)
-      let out2 = (await predictionMarket.getTokens())[1]
-      let outcome2 = ERC20__factory.connect(out2, owner)
-
-      expect(await outcome1.name()).to.contain("Yes")
-      expect(await outcome2.name()).to.contain("No")
-      expect((await predictionMarket.getTokens())[2]).to.be.not.ok
-      //yes, it makes the test fail "AssertionError: expected undefined to be truthy"
-    })
-
-    it("Should emit prediction event", async () => {
-      const user = users[0]
-
-      await token.connect(user).approve(predictionMarket.address, 1000)
-      const predictTx = predictionMarket.connect(user).predict(YES, 1000)
-      await expect(predictTx)
-        .to.emit(predictionMarket, "Prediction")
-        .withArgs(await user.getAddress(), YES)
-    })
-
-    it("Should update user balance", async () => {
-      const user = users[0]
-      await token.connect(user).approve(predictionMarket.address, 1000)
-
-      await predictionMarket.connect(user).predict(YES, 1000)
-
-      expect(await predictionMarket.connect(user).userOutcomeBalance(YES)).to.be.equal(1000)
-
-      expect(await token.balanceOf(await user.getAddress())).to.equal(initialBalance - 1000)
-      expect(await token.balanceOf(predictionMarket.address)).to.equal(1000)
-
-      let yesToken = ERC20__factory.connect((await predictionMarket.getTokens())[0], owner)
-      let noToken = ERC20__factory.connect((await predictionMarket.getTokens())[1], owner)
-
-      expect(await yesToken.balanceOf(await user.getAddress())).to.be.equal(1000)
-      expect(await noToken.balanceOf(await user.getAddress())).to.be.equal(0)
-    })
-
-    it("Should update outcome balance", async () => {
-      const user = users[0]
-      await token.connect(user).approve(predictionMarket.address, 1000)
-
-      await predictionMarket.connect(user).predict(YES, 1000)
-
-      expect(await predictionMarket.connect(user).userOutcomeBalance(YES)).to.be.equal(1000)
-      expect(await predictionMarket.connect(user).outcomeBalance(YES)).to.be.equal(1000)
-      expect(await predictionMarket.connect(user).outcomeBalance(NO)).to.be.equal(0)
-
-      let yesToken = ERC20__factory.connect((await predictionMarket.getTokens())[0], owner)
-      expect(await yesToken.balanceOf(predictionMarket.address)).to.be.equal((await yesToken.totalSupply()).sub(1000))
-    })
-
-    it("Should revert if unknown outcome", async () => {
-      const user = users[0]
-      await token.connect(user).approve(predictionMarket.address, 1000)
-      await expect(predictionMarket.connect(user).predict(UNKNOWN, 1000)).to.be.reverted
-    })
-  })
 })

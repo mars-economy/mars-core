@@ -45,4 +45,12 @@ interface ISettlement {
     function getWinningOutcome(address _predictionMarket) external returns (bytes16);
 
     function getOracles() external view returns (address[] memory);
+
+    function setOracleAcceptanceAmount(uint256 _newValue) external;
+
+    function setDisputeFeeAmount(uint256 _newValue) external;
+
+    function setTimeToOpenDispute(uint256 _newValue) external;
+
+    function setVotingPeriod(uint256 _newValue) external;
 }
