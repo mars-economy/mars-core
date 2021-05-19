@@ -10,15 +10,7 @@ interface IMarsERC20 {
         uint256 _option
     ) external;
 
-    function mint(address _to, uint256 _value) external;
-
-    function burn(address _from, uint256 _value) external;
-
     function setLockPeriod(uint256 _newValue) external;
 
-    function setEmissionController(address _addr) external;
-
     function getLockPeriod() external view returns (uint256);
-
-    function getEmissionController() external view returns (address);
 }
