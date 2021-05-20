@@ -19,6 +19,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
 
     uint256 public predictionTimeStart; //when contract was created
     uint256 public predictionTimeEnd; //when buying stops
+    uint256 public predictorsNumber;
 
     uint256 public startSharePrice;
     uint256 public endSharePrice;
@@ -39,9 +40,11 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
     function initialize(
         address _token,
         uint256 _predictionTimeEnd,
-        address _settlement,
+        // address _settlement,
         Market.Outcome[] memory outcomes,
-        address owner
+        address owner,
+        uint256 _startSharePrice,
+        uint256 _endSharePrice
     ) external initializer {
         __Ownable_init();
         transferOwnership(owner);
@@ -55,14 +58,14 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
             _addOutcome(outcomes[i].uuid, outcomes[i].position, outcomes[i].name);
         }
 
-        settlement = ISettlement(_settlement);
+        // settlement = ISettlement(_settlement);
         token = _token;
 
-        notFee = 9970; // 0.3%, 100 = 1%
+        notFee = 9970; // 0.3%
         feeDivisor = 10000;
 
-        startSharePrice = 1_000_000;
-        endSharePrice = 10_000_000;
+        startSharePrice = _startSharePrice;
+        endSharePrice = _endSharePrice;
     }
 
     // function collect() {
@@ -195,6 +198,8 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
             MarsERC20OutcomeToken(tokenOutcomeAddress[_outcome]).mint(msg.sender, _amountWithFee, (_amount * notFee) / feeDivisor),
             "MARS: FAILED TO TRANSFER TO BUYER"
         );
+
+        predictorsNumber += 1;
         totalPredicted += (_amount * notFee) / feeDivisor;
 
         require(isPredictionProfitable(_outcome, block.timestamp), "Prediction is not profitable");

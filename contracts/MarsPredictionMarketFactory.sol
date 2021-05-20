@@ -16,11 +16,6 @@ import "./libraries/Market.sol";
 import "hardhat/console.sol"; //TODO: REMOVE
 
 contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable, OwnableUpgradeable {
-    mapping(bytes16 => Category) public categories;
-    mapping(bytes16 => Milestone) public milestones;
-    mapping(address => PredictionMarket) public predictionMarkets;
-    // address[] markets;
-
     address public addressResolver;
     address settlement;
 
@@ -31,64 +26,19 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable,
         settlement = _settlement;
     }
 
-    function updateCategory(
-        bytes16 uuid,
-        uint8 position,
-        string calldata name,
-        string calldata description
-    ) external override onlyOwner {
-        // Category memory category;
-        // category.position = position;
-        // category.name = name;
-        // category.description = description;
-
-        // categories[uuid] = category;
-
-        emit CategoryUpdatedEvent(uuid, position, name, description);
-    }
-
-    function updateMilestone(
-        bytes16 uuid,
-        bytes16 categoryUuid,
-        uint8 position,
-        string calldata name,
-        string calldata description,
-        MilestoneStatus status
-    ) external override onlyOwner {
-        // Milestone memory milestone;
-        // milestone.categoryUuid = categoryUuid;
-        // milestone.position = position;
-        // milestone.name = name;
-        // milestone.description = description;
-        // milestone.status = status;
-
-        // milestones[uuid] = milestone;
-
-        emit MilestoneUpdatedEvent(uuid, categoryUuid, position, name, description, status);
-    }
-
     function createMarket(
-        bytes16 milestoneUuid,
-        uint8 position,
-        string calldata name,
-        string calldata description,
         address token,
-        uint256 dueDate,
-        Market.Outcome[] calldata outcomes
+        uint256 _predictionTimeEnd,
+        Market.Outcome[] calldata outcomes,
+        uint256 startSharePrice,
+        uint256 endSharePrice
     ) external override onlyOwner returns (address) {
-        require(dueDate > block.timestamp, "MARS: Invalid prediction market due date");
+        require(_predictionTimeEnd > block.timestamp, "MARS: Invalid prediction market due date");
 
-        // PredictionMarket memory market;
-        // market.milestoneUuid = milestoneUuid;
-        // market.position = position;
-        // market.name = name;
-        // market.description = description;
+        MarsPredictionMarket predictionMarket =
+            MarsPredictionMarket(_createMarketContract(token, _predictionTimeEnd, outcomes, owner(), startSharePrice, endSharePrice));
 
-        MarsPredictionMarket predictionMarket = MarsPredictionMarket(_createMarketContract(token, dueDate, settlement, outcomes, owner()));
-
-        // predictionMarkets[address(predictionMarket)] = market;
-        emit PredictionMarketCreatedEvent(milestoneUuid, position, name, description, token, dueDate, address(predictionMarket));
-        // markets.push(address(predictionMarket));
+        emit PredictionMarketCreatedEvent(address(predictionMarket));
 
         return address(predictionMarket);
     }
@@ -96,11 +46,21 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable,
     function _createMarketContract(
         address token,
         uint256 dueDate,
-        address settlement,
         Market.Outcome[] calldata outcomes,
-        address owner
+        address owner,
+        uint256 startSharePrice,
+        uint256 endSharePrice
     ) internal returns (address) {
-        bytes memory data = abi.encodeWithSelector(MarsPredictionMarket.initialize.selector, token, dueDate, settlement, outcomes, owner);
+        bytes memory data =
+            abi.encodeWithSelector(
+                MarsPredictionMarket.initialize.selector,
+                token,
+                dueDate,
+                outcomes,
+                owner,
+                startSharePrice,
+                endSharePrice
+            );
         InitializableAdminUpgradeabilityProxy proxy = new InitializableAdminUpgradeabilityProxy();
         proxy.initialize(getOrCreateImplementation(type(MarsPredictionMarket).creationCode, "MARS"), address(this), data);
         return address(proxy);
@@ -130,19 +90,4 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable,
         }
         return size > 0;
     }
-
-    // //Obsolete
-    // function addOutcome(
-    //     address predictionMarket,
-    //     bytes16 uuid,
-    //     uint8 position,
-    //     string calldata name
-    // ) external override onlyOwner {
-    //     MarsPredictionMarket(predictionMarket).addOutcome(uuid, position, name);
-    // emit OutcomeChangedEvent(uuid, predictionMarket, position, name);
-    // }
-
-    // function getMarkets() external view override returns (address[] memory) {
-    //     return markets;
-    // }
 }

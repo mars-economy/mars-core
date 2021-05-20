@@ -79,27 +79,25 @@ describe("Integration", async () => {
 
     //first way to add outcomes
     let tx = await predictionMarketFactory.connect(owner).createMarket(
-      MILESTONE, 1, "Example", "Example", daiToken.address, timeEnd, 
-      [{uuid: YES, name: "YES", position: 1}]
+      daiToken.address, timeEnd, 
+      [{uuid: YES, name: "YES", position: 1}], tokens(1), tokens(10)
     )
 
   const MILESTONE2 = ethers.utils.arrayify("0x13a12ea1f1cb4b6e96a3fbdfcf8c9815")
   let tx2 = await predictionMarketFactory.connect(owner).createMarket(
-    MILESTONE2, 2, "Example", "Example", daiToken.address, timeEnd, 
-    [{uuid: YES, name: "YES", position: 1}]
+    daiToken.address, timeEnd, [{uuid: YES, name: "YES", position: 1}], tokens(1), tokens(10)
   ) //testing creation of second market. Used to be a bug
 
     // getting market address from event
     let rx = await tx.wait()
-    let _newMarket = rx.events![3].args!.contractAddress
-
-    //second way to add outcomes
-    // await predictionMarketFactory.connect(owner).addOutcome(_newMarket, NO, 2, "NO")
+    let _newMarket = rx.events![3].args!._market
 
     await settlement.connect(owner).registerMarket(_newMarket, [YES, NO], timeEnd)
 
     predictionMarket = MarsPredictionMarket__factory.connect(_newMarket, owner)
+    //second way to add outcomes
     await predictionMarket.connect(owner).addOutcome(NO, 2, "NO")
+    await predictionMarket.connect(owner).setSettlement(settlement.address)
 
     expect(await predictionMarket.getNumberOfOutcomes()).to.be.equal(2)
 
