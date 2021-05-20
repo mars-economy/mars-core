@@ -37,11 +37,11 @@ describe("Prediction Market", async () => {
     .connect(owner)
     .deploy()) as MarsPredictionMarketFactory
   
-    predictionMarketFactory.connect(owner).initialize(await owner.getAddress(), await owner.getAddress())
+    predictionMarketFactory.connect(owner).initialize(await owner.getAddress())
 
     let tx = await predictionMarketFactory.connect(owner).createMarket(
-      MILESTONE, 1, "Example", "Example", token.address, timeEnd, 
-      [{uuid: YES, name: "YES", position: 1}]
+      token.address, timeEnd, 
+      [{uuid: YES, name: "YES", position: 1}], tokens(1), tokens(10)
     )
 
     let rx = await tx.wait()

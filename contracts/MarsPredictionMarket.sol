@@ -74,7 +74,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
     // }
 
     function roundWeek(uint256 _date) public pure returns (uint256) {
-        return _date / 7 days;
+        return (_date / 7 days) * 7 days;
     }
 
     // startSharePrice = 1 ether;
@@ -108,8 +108,9 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
             //else app[i].currentReward = 0, but that goes by default
             app[i].rewardReceived = outcomesId == winningOutcome ? claimed[_wallet] : false;
 
-            uint256 outcomeBalance = MarsERC20OutcomeToken(outcome).totalSupply();
-            outcomeBalance = outcomeBalance == 0 ? 1 : outcomeBalance;
+            uint256 _outcomeBalance = MarsERC20OutcomeToken(outcome).totalSupply();
+            app[i].outcomeBalance = _outcomeBalance;
+            _outcomeBalance = _outcomeBalance == 0 ? 1 : _outcomeBalance;
 
             app[i].suspended = _currentTime > predictionTimeEnd ||
                 _currentTime < predictionTimeStart ||
@@ -165,9 +166,8 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         //amount of tokens the owner put on the winning outcome * amount of tokens put by all owners on all outcomes
         // / amount of tokens all owners put on the winning outcome
 
-        uint256 currentAmount = MarsERC20OutcomeToken(tokenOutcomeAddress[winningOutcome]).balanceOf(msg.sender); //amount of tokens he has
         require(
-            MarsERC20OutcomeToken(tokenOutcomeAddress[winningOutcome]).transferFrom(msg.sender, address(this), currentAmount),
+            MarsERC20OutcomeToken(tokenOutcomeAddress[winningOutcome]).transferFrom(msg.sender, address(this), userOutcomeTokens),
             "MARS: FAILED TO TRANSFER FROM BUYER"
         );
 

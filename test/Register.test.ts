@@ -110,7 +110,7 @@ const outcomes = Array(
     Array({uuid: "0x8ded5a1b185040c6a7e745a64b91d8ad", position: 1, name: "Yes"}, {uuid: "0x6e91d0a8239e4e68bf3a82bb450d6898", position: 1, name: "No"}),
     Array({uuid: "0x86ac0df9c34d469fac158ce6d9696ad8", position: 1, name: "Yes"}, {uuid: "0x5e6d846b3ae246fe8a5c09d4b13f00fc", position: 1, name: "No"}),
     Array({uuid: "0x65971f65796749e4be49a707038e7784", position: 1, name: "Yes"}, {uuid: "0x13390113b9e34e96bd3b6443513e5786", position: 1, name: "No"})
-  )
+)
 
 import { ethers, upgrades } from "hardhat"
 import { expect } from "chai"
@@ -146,7 +146,7 @@ describe("Register", async () => {
             .connect(owner)
             .deploy()) as MarsPredictionMarketFactory
         
-        marsFactory.connect(owner).initialize(await owner.getAddress(), settlement.address)
+        marsFactory.connect(owner).initialize(settlement.address)
 
     })
   

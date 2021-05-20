@@ -18,17 +18,10 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
     PredictionInfo[] predictionMarkets;
     OutcomeInfo[] outcomes;
 
-    MarsPredictionMarketFactory marsFactory;
-    address settlement;
-
     mapping(bytes16 => uint256) public slot;
 
     function initialize() external initializer {
         __Ownable_init();
-        // transferOwnership(owner);
-
-        // marsFactory = MarsPredictionMarketFactory(_marsFactory);
-        // settlement = _settlement;
     }
 
     function updateCategory(
@@ -86,10 +79,7 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
 
         PredictionInfo memory market;
 
-        // MarsPredictionMarket predictionMarket = marsFactory.createMarket(milestoneUuid, position, name, description,token, dueDate, Market.Outcome[]);
-
         market.id = addr;
-        // market.id = address(predictionMarket);
         market.milestone = milestoneUuid;
         market.position = position;
         market.name = name;
@@ -105,18 +95,17 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         */
 
         predictionMarkets.push(market);
-        // slot[id] = predictionMarkets.length - 1;
 
         emit PredictionMarketRegisteredEvent(milestoneUuid, position, name, description, token, dueDate, market.id);
 
-        for (uint256 i = 0; i < outcomes.length; i++) addOutcome(outcomes[i].uuid, market.id, outcomes[i].position, outcomes[i].name);
+        for (uint256 i = 0; i < outcomes.length; i++) addOutcome(market.id, outcomes[i].uuid, outcomes[i].position, outcomes[i].name);
 
         return market.id;
     }
 
     function addOutcome(
-        bytes16 id,
         address prediction,
+        bytes16 id,
         uint8 position,
         string calldata name
     ) public onlyOwner {
@@ -132,11 +121,7 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         emit OutcomeChangedEvent(id, prediction, position, name);
     }
 
-    function getCategories() external view returns (CategoryInfo[] memory) {
-        return categories;
-    }
-
-    function getPredictionData()
+    function getPredictionData(uint256 _currentTime)
         external
         view
         returns (
@@ -146,8 +131,6 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
             OutcomeInfo[] memory
         )
     {
-        CategoryInfo[] memory cat = new CategoryInfo[](predictionMarkets.length);
-        MilestoneInfo[] memory mile = new MilestoneInfo[](outcomes.length);
         PredictionInfo[] memory pred = new PredictionInfo[](predictionMarkets.length);
         OutcomeInfo[] memory out = new OutcomeInfo[](outcomes.length);
 
@@ -155,7 +138,7 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
             pred[i] = predictionMarkets[i];
             pred[i].state = MarsPredictionMarket(pred[i].id).winningOutcome() != bytes16(0)
                 ? uint8(PredictionMarketState.Closed)
-                : pred[i].dueDate > block.timestamp
+                : pred[i].dueDate > _currentTime
                 ? uint8(PredictionMarketState.Open)
                 : uint8(PredictionMarketState.Settlement);
             pred[i].predictorsNumber = MarsPredictionMarket(pred[i].id).predictorsNumber();

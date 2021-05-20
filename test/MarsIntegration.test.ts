@@ -55,7 +55,7 @@ describe("Integration", async () => {
       .connect(owner)
       .deploy()) as MarsPredictionMarketFactory
     
-    predictionMarketFactory.connect(owner).initialize(await owner.getAddress(), settlement.address)
+    predictionMarketFactory.connect(owner).initialize(settlement.address)
   })
 
   it("Can create market, oracle, and vote for new outcome, both vote yes", async () => {
@@ -92,7 +92,7 @@ describe("Integration", async () => {
     let rx = await tx.wait()
     let _newMarket = rx.events![3].args!._market
 
-    await settlement.connect(owner).registerMarket(_newMarket, [YES, NO], timeEnd)
+    await settlement.connect(owner).registerMarket(_newMarket, timeEnd)
 
     predictionMarket = MarsPredictionMarket__factory.connect(_newMarket, owner)
     //second way to add outcomes
@@ -117,7 +117,7 @@ describe("Integration", async () => {
     await predictionMarket.connect(users[0]).predict(YES, tokens(1000))
     await predictionMarket.connect(users[1]).predict(NO, tokens(1000))
 
-    await expect(settlement.connect(oracle1_).voteWinningOutcome(_newMarket, YES)).to.be.revertedWith("VOTING PERIOD HASN'T ENDED")
+    await expect(settlement.connect(oracle1_).voteWinningOutcome(_newMarket, YES)).to.be.revertedWith("Due date hasn't come yet")
 
     await wait(ethers, 60 * 60 * 24 * 2)
 

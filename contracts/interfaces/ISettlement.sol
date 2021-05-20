@@ -3,24 +3,19 @@ pragma solidity >=0.8.0 <0.9.0;
 
 interface ISettlement {
     event PotentialOracleEvent(address _newOracle);
-    event OracleAcceptedEvent(address _newOracle, uint256 _sum);
+    event OracleAcceptedEvent(address _newOracle);
     event OracleVotedEvent(address indexed _oracle, address indexed _predictionMarket, bytes16 _outcome);
     event OutcomeDefinedEvent(address indexed _predictionMarket, bytes16 _outcome);
 
     struct MarketStatus {
-        bytes16[] outcomes;
-        uint256 votingEnd;
+        uint256 dueDate;
         uint256 oraclesVoted;
         bytes16 winningOutcome;
         bool finalized;
         bool startedDispute;
     }
 
-    function registerMarket(
-        address _predictionMarket,
-        bytes16[] memory _outcomes,
-        uint256 _votingEnd
-    ) external;
+    function registerMarket(address _predictionMarket, uint256 _dueDate) external;
 
     function addOracle(address _newOracle) external;
 

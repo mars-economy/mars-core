@@ -16,27 +16,25 @@ import "./libraries/Market.sol";
 import "hardhat/console.sol"; //TODO: REMOVE
 
 contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable, OwnableUpgradeable {
-    address public addressResolver;
-    address settlement;
+    address public settlement;
 
-    function initialize(address _addressResolver, address _settlement) external initializer {
+    function initialize(address _settlement) external initializer {
         __Ownable_init();
 
-        addressResolver = _addressResolver;
         settlement = _settlement;
     }
 
     function createMarket(
         address token,
-        uint256 _predictionTimeEnd,
+        uint256 predictionTimeEnd,
         Market.Outcome[] calldata outcomes,
         uint256 startSharePrice,
         uint256 endSharePrice
     ) external override onlyOwner returns (address) {
-        require(_predictionTimeEnd > block.timestamp, "MARS: Invalid prediction market due date");
+        require(predictionTimeEnd > block.timestamp, "MARS: Invalid prediction market due date");
 
         MarsPredictionMarket predictionMarket =
-            MarsPredictionMarket(_createMarketContract(token, _predictionTimeEnd, outcomes, owner(), startSharePrice, endSharePrice));
+            MarsPredictionMarket(_createMarketContract(token, predictionTimeEnd, outcomes, owner(), startSharePrice, endSharePrice));
 
         emit PredictionMarketCreatedEvent(address(predictionMarket));
 
@@ -45,7 +43,7 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable,
 
     function _createMarketContract(
         address token,
-        uint256 dueDate,
+        uint256 predictionTimeEnd,
         Market.Outcome[] calldata outcomes,
         address owner,
         uint256 startSharePrice,
@@ -55,7 +53,7 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable,
             abi.encodeWithSelector(
                 MarsPredictionMarket.initialize.selector,
                 token,
-                dueDate,
+                predictionTimeEnd,
                 outcomes,
                 owner,
                 startSharePrice,

@@ -8,6 +8,7 @@ library Market {
         uint256 currentReward;
         bool rewardReceived;
         uint256 sharePrice;
+        uint256 outcomeBalance;
     }
 
     struct Outcome {

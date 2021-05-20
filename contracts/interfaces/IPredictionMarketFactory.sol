@@ -8,7 +8,7 @@ interface IPredictionMarketFactory {
 
     function createMarket(
         address token,
-        uint256 dueDate,
+        uint256 predictionTimeEnd,
         Market.Outcome[] calldata outcomes,
         uint256 startSharePrice,
         uint256 endSharePrice
