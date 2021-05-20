@@ -25,4 +25,6 @@ interface IPredictionMarket {
     function getReward() external;
 
     function setSettlement(address _newSettlement) external;
+
+    function getTokenOutcomeAddress(bytes16 outcomeUuid) external view returns (address);
 }

@@ -226,4 +226,8 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
     function setSettlement(address _newSettlement) external override onlyOwner {
         settlement = ISettlement(_newSettlement);
     }
+
+    function getTokenOutcomeAddress(bytes16 outcomeUuid) external view override returns (address) {
+        return tokenOutcomeAddress[outcomeUuid];
+    }
 }
