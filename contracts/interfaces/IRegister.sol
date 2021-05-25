@@ -3,7 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 interface IRegister {
     enum MilestoneStatus {Historical, Current, Future}
-    enum PredictionMarketState {Open, Settlement, Closed}
+    enum PredictionMarketState {Open, Settlement, Closed, Waiting}
 
     struct CategoryInfo {
         bytes16 id;
@@ -27,7 +27,7 @@ interface IRegister {
         uint256 position;
         string name;
         string description;
-        uint8 state;
+        PredictionMarketState state;
         address token;
         uint256 dueDate;
         uint256 predictionTimeEnd;

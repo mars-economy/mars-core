@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./MarsERC20OutcomeToken.sol";
 import "./interfaces/IPredictionMarket.sol";
 import "./libraries/Market.sol";
+import "./Parameters.sol";
 import "./interfaces/ISettlement.sol";
 
 import "hardhat/console.sol";
@@ -28,6 +29,8 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
     bytes16 public winningOutcome;
     uint256 public notFee;
     uint256 public feeDivisor;
+    uint256 feeAccumulated;
+    // bool feeSent;
 
     mapping(bytes16 => address) public tokenOutcomeAddress;
     //outcome => address of token
@@ -36,6 +39,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
     mapping(address => bool) public claimed;
 
     ISettlement settlement;
+    Parameters parameters;
 
     function initialize(
         address _token,
@@ -67,11 +71,6 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         startSharePrice = _startSharePrice;
         endSharePrice = _endSharePrice;
     }
-
-    // function collect() {
-    //     if oracle;
-    //     if owner;
-    // }
 
     function roundWeek(uint256 _date) public pure returns (uint256) {
         return (_date / 7 days) * 7 days;
@@ -145,6 +144,20 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         tokenOutcomeAddress[uuid] = address(newToken);
     }
 
+    function collectOracleFee() external {
+        require(settlement.oracleCorrectlyVoted(address(this)));
+
+        (uint256 fee, uint256 divisor) = parameters.getOracleFee();
+
+        require(IERC20(token).transfer(msg.sender, (feeAccumulated * fee) / divisor), "Failed to transfer amount");
+    }
+
+    function collectProtocolFee() external onlyOwner {
+        (uint256 fee, uint256 divisor, address receiver) = parameters.getProtocolFee();
+
+        require(IERC20(token).transfer(receiver, (feeAccumulated * fee) / divisor), "Failed to transfer amount");
+    }
+
     function getReward() external override {
         bytes16 _winningOutcome = winningOutcome;
         if (_winningOutcome == bytes16(0)) {
@@ -193,6 +206,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         require(IERC20(token).transferFrom(msg.sender, address(this), _amount), "MARS: FAILED TO TRANSFER FROM BUYER");
 
         uint256 _amountWithFee = (_amount * notFee * 1_000_000) / feeDivisor / getSharePrice(block.timestamp);
+        feeAccumulated += _amount - (_amount * notFee) / feeDivisor;
 
         require(
             MarsERC20OutcomeToken(tokenOutcomeAddress[_outcome]).mint(msg.sender, _amountWithFee, (_amount * notFee) / feeDivisor),
@@ -229,5 +243,9 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
 
     function getTokenOutcomeAddress(bytes16 outcomeUuid) external view override returns (address) {
         return tokenOutcomeAddress[outcomeUuid];
+    }
+
+    function setParameters(address _newParameters) external onlyOwner {
+        parameters = Parameters(_newParameters);
     }
 }

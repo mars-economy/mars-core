@@ -13,6 +13,10 @@ interface ISettlement {
         bytes16 winningOutcome;
         bool finalized;
         bool startedDispute;
+        address whoStartedDispute;
+        uint256 disputeCost;
+        mapping(address => bool) correctlyVoted;
+        mapping(address => bool) hasCollected;
     }
 
     function registerMarket(address _predictionMarket, uint256 _dueDate) external;
@@ -48,4 +52,6 @@ interface ISettlement {
     function setTimeToOpenDispute(uint256 _newValue) external;
 
     function setVotingPeriod(uint256 _newValue) external;
+
+    function oracleCorrectlyVoted(address _predictionMarket) external returns (bool);
 }

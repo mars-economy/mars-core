@@ -10,8 +10,9 @@ import {
   MarsPredictionMarket__factory,
   MarsPredictionMarketFactory,
   Settlement,
+  Parameters
 } from "../typechain"
-import { setgroups } from "node:process"
+// import { exit, setgroups } from "node:process"
 
 
 describe("Integration", async () => {
@@ -24,6 +25,7 @@ describe("Integration", async () => {
   let daiToken: TestERC20
   let marsToken: TestERC20
   let settlement: Settlement
+  let parameters: Parameters
 
   const initialBalance = tokens(10_000)
   const YES = ethers.utils.arrayify("0xc53ef995914f4b409b22e6128c2bcf17")
@@ -45,11 +47,19 @@ describe("Integration", async () => {
       await daiToken.transfer(await user.getAddress(), initialBalance)
     }
 
+    parameters = (await (await ethers.getContractFactory("Parameters"))
+    .connect(owner)
+    .deploy()) as Parameters
+
+    parameters.initialize(await users[8].getAddress())
+
     settlement = (await (await ethers.getContractFactory("Settlement"))
       .connect(owner)
       .deploy()) as Settlement
 
-    settlement.connect(owner).initialize(marsToken.address)
+    settlement.connect(owner).initialize(marsToken.address, parameters.address)
+
+    // await settlement.test() //left it inside for testing the linked list
 
     predictionMarketFactory = (await (await ethers.getContractFactory("MarsPredictionMarketFactory"))
       .connect(owner)
@@ -111,8 +121,8 @@ describe("Integration", async () => {
 
     await checkBalances([users[0], users[1]], [tokens(10000), tokens(10000)])
 
-    console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
-    console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))  
+    // console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
+    // console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))  
     
     await predictionMarket.connect(users[0]).predict(YES, tokens(1000))
     await predictionMarket.connect(users[1]).predict(NO, tokens(1000))
@@ -126,9 +136,8 @@ describe("Integration", async () => {
 
     expect(await settlement.reachedConsensus(_newMarket)).to.be.equal(true)
     
-    console.log(111)    
-    console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
-    console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))
+    // console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
+    // console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))
     
     await wait(ethers, 60 * 60 * 24 * 8)
 
@@ -137,15 +146,19 @@ describe("Integration", async () => {
 
     await checkBalances([users[0], users[1]], [tokens(9000), tokens(9000)])
 
-    console.log(111)
-    console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
-    console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))  
+    // console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
+    // console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))  
     
+    expect(await daiToken.balanceOf(parameters.address)).to.be.equal("0")
+
     // console.log(await yesToken.connect(users[0]).stakedAmount())
     expect(await predictionMarket.connect(users[0]).getReward()).to.be.ok
     expect(await predictionMarket.connect(users[1]).getReward()).to.be.ok
 
     await checkBalances([users[0], users[1]], [tokens(10994), tokens(9000)])
+
+    // await predictionMarket.sendFeesToParameters(parameters.address)
+    // expect(await daiToken.balanceOf(parameters.address)).to.be.equal(tokens(6)) // 2000 * 0.997 = 6
   })
 
 
