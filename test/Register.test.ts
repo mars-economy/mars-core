@@ -30,7 +30,7 @@ describe("Register", async () => {
             .connect(owner)
             .deploy()) as Parameters
         
-        parameters.initialize(AddressZero, 10, 20, 10000, 60*60*24, 60*60*24*7, 60*60*24*7, tokens(100000), tokens(20000), 0)
+        parameters.initialize(AddressZero, 10, 20, 10000, 60*60*24, 60*60*24*7, 60*60*24*7, tokens(100000), tokens(20000), 0, 0)
 
         settlement.connect(owner).initialize(AddressZero, AddressZero)
         

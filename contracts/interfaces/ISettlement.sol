@@ -22,6 +22,8 @@ interface ISettlement {
         uint256 collected;
     }
 
+    function reachedConsensus(address _predictionMarket) external view returns (bool);
+
     function registerMarket(address _predictionMarket, uint256 _dueDate) external;
 
     function addOracle(address _newOracle) external;

@@ -117,16 +117,6 @@ async function createMarket(
 
   console.log("register.register done")
 
-  for (var i = 0; i < outcomes.length; i++) {
-    await (
-      await register
-        .connect(me)
-        .addOutcome(marketAddress, outcomes[i]["uuid"], outcomes[i]["position"], outcomes[i]["name"], {gasLimit:7000000})
-    ).wait()
-  }
-
-  console.log("outcomes added")
-
   await (
     await settlement
       .connect(me)

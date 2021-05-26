@@ -38,7 +38,7 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         uint8 position,
         string calldata name,
         string calldata description
-    ) external onlyOwner {
+    ) external override onlyOwner {
         CategoryInfo memory category;
         category.id = uuid;
         category.position = position;
@@ -58,7 +58,7 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         string calldata name,
         string calldata description,
         MilestoneStatus status
-    ) external onlyOwner {
+    ) external override onlyOwner {
         MilestoneInfo memory milestone;
         milestone.id = uuid;
         milestone.category = categoryUuid;
@@ -83,7 +83,7 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         uint256 dueDate,
         uint256 predictionTimeEnd,
         Market.Outcome[] calldata outcomes
-    ) external onlyOwner returns (address) {
+    ) external override onlyOwner returns (address) {
         require(dueDate > block.timestamp, "MARS: Invalid prediction market due date");
 
         PredictionInfo memory market;
@@ -125,6 +125,7 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
     function getPredictionData(uint256 _currentTime)
         external
         view
+        override
         returns (
             CategoryInfo[] memory,
             MilestoneInfo[] memory,

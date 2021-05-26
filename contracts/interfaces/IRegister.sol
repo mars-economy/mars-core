@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+import "../libraries/Market.sol";
+
 interface IRegister {
     enum MilestoneStatus {Historical, Current, Future}
     enum PredictionMarketState {Open, Settlement, Closed, Waiting}
@@ -63,4 +65,42 @@ interface IRegister {
         address contractAddress
     );
     event OutcomeChangedEvent(bytes16 uuid, address predictionMarket, uint8 position, string name);
+
+    function updateCategory(
+        bytes16 uuid,
+        uint8 position,
+        string calldata name,
+        string calldata description
+    ) external;
+
+    function updateMilestone(
+        bytes16 uuid,
+        bytes16 categoryUuid,
+        uint8 position,
+        string calldata name,
+        string calldata description,
+        MilestoneStatus status
+    ) external;
+
+    function registerMarket(
+        address addr,
+        bytes16 milestoneUuid,
+        uint8 position,
+        string calldata name,
+        string calldata description,
+        address token,
+        uint256 dueDate,
+        uint256 predictionTimeEnd,
+        Market.Outcome[] calldata outcomes
+    ) external returns (address);
+
+    function getPredictionData(uint256 _currentTime)
+        external
+        view
+        returns (
+            CategoryInfo[] memory,
+            MilestoneInfo[] memory,
+            PredictionInfo[] memory,
+            OutcomeInfo[] memory
+        );
 }

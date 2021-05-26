@@ -51,7 +51,7 @@ describe("Integration", async () => {
     .connect(owner)
     .deploy()) as Parameters
 
-    parameters.initialize(await users[8].getAddress(), 10, 20, 10000, 60*60*24, 60*60*24*7, 60*60*24*7, tokens(100000), tokens(20000), 0)
+    parameters.initialize(await users[8].getAddress(), 10, 20, 10000, 60*60*24, 60*60*24*7, 60*60*24*7, tokens(100000), tokens(20000), 0, 0)
 
     settlement = (await (await ethers.getContractFactory("Settlement"))
       .connect(owner)
@@ -85,6 +85,7 @@ describe("Integration", async () => {
     await settlement.connect(oracle2_).acceptAndStake()
     expect((await settlement.getOracles()).length).to.be.equal(2)
 
+    
     //first way to add outcomes
     let tx = await predictionMarketFactory.connect(owner).createMarket(
       daiToken.address, timeEnd, 
@@ -105,13 +106,14 @@ describe("Integration", async () => {
     predictionMarket = MarsPredictionMarket__factory.connect(_newMarket, owner)
     //second way to add outcomes
     await predictionMarket.connect(owner).addOutcome(NO, 2, "NO")
+    
     await predictionMarket.connect(owner).setSettlement(settlement.address)
-    await predictionMarket.connect(owner)["setParameters(address)"](parameters.address)
+    await predictionMarket.connect(owner).setParameters(parameters.address)
 
     expect(await predictionMarket.getNumberOfOutcomes()).to.be.equal(2)
 
-    let yesToken = MarsERC20OutcomeToken__factory.connect((await predictionMarket.getTokens())[0], owner)
-    let noToken = MarsERC20OutcomeToken__factory.connect((await predictionMarket.getTokens())[1], owner)
+    let yesToken = MarsERC20OutcomeToken__factory.connect(await predictionMarket.getTokenOutcomeAddress(YES), owner)
+    let noToken = MarsERC20OutcomeToken__factory.connect(await predictionMarket.getTokenOutcomeAddress(NO), owner)
 
     expect(await settlement.reachedConsensus(_newMarket)).to.be.equal(false)
 

@@ -34,9 +34,11 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         parameters = Parameters(_parameters);
     }
 
-    function isSettlementProcess(uint256 _currentTime) public view returns (bool) {
-        if (list.getFirstDate() < _currentTime) return true;
-        return false;
+    function isSettlementProcess(uint256 _currentTime) internal view returns (bool) {
+        uint256 _dueDate = list.getFirstDate();
+
+        if (_dueDate == 0 || _dueDate > _currentTime) return false;
+        return true;
     }
 
     function registerMarket(address _predictionMarket, uint256 _dueDate) external override onlyOwner {
@@ -67,7 +69,7 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
     }
 
     function removeOracle(address oracle) external override onlyOwner {
-        require(isSettlementProcess(block.timestamp), "Active disputes in progress");
+        require(!isSettlementProcess(block.timestamp), "Active disputes in progress");
 
         uint256 amount = staked[oracle];
         require(amount > 0, "Oracle not added");
@@ -84,7 +86,7 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         uint256 oracleAcceptanceAmount = parameters.getOracleAcceptanceAmount();
 
         if (stakedAmount == 1) {
-            require(isSettlementProcess(block.timestamp), "Active disputes in progress");
+            require(!isSettlementProcess(block.timestamp), "Active disputes in progress");
             require(marsToken.transferFrom(msg.sender, address(this), oracleAcceptanceAmount), "Failed to transfer amount");
             emit OracleAcceptedEvent(msg.sender);
             oracles.push(msg.sender);
@@ -124,7 +126,7 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         require(marketStatus[_predictionMarket].finalized == false, "Prediction is finalized");
         require(marketStatus[_predictionMarket].startedDispute == false, "Dispute has started");
 
-        require(reachedConsensus(_predictionMarket), "Consensus has not been reached");
+        require(_reachedConsensus(_predictionMarket), "Consensus has not been reached");
 
         uint256 disputeFeeAmount = parameters.getDisputeFeeAmount();
         marketStatus[_predictionMarket].startedDispute = true;
@@ -142,19 +144,24 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         require(marketStatus[_predictionMarket].finalized == false, "Prediction is finalized");
         require(marketStatus[_predictionMarket].startedDispute == false, "Dispute has started");
 
-        require(!reachedConsensus(_predictionMarket), "Consensus has been reached");
+        require(!_reachedConsensus(_predictionMarket), "Consensus has been reached");
 
         marketStatus[_predictionMarket].startedDispute = true;
 
         // IMarsGovernance(owner()).changeOutcome(_predictionMarket, marketStatus[_predictionMarket].outcomes);
     }
 
-    function reachedConsensus(address _predictionMarket) public view returns (bool) {
+    function reachedConsensus(address _predictionMarket) external view override returns (bool) {
+        return _reachedConsensus(_predictionMarket);
+    }
+
+    function _reachedConsensus(address _predictionMarket) internal view returns (bool) {
         // if (marketStatus[_predictionMarket].oraclesVoted >= oracles.length) return false;
 
-        if (oracles.length == 0 || marketStatus[_predictionMarket].oraclesVoted == 0) return false;
+        uint256 count = marketStatus[_predictionMarket].oraclesVoted;
+        if (oracles.length == 0 || count == 0) return false;
 
-        for (uint256 i = 1; i < oracles.length; i++)
+        for (uint256 i = 1; i < count; i++)
             if (oracleOutcome[oracles[i - 1]][_predictionMarket] != oracleOutcome[oracles[i]][_predictionMarket]) return false;
 
         return true;
@@ -195,7 +202,7 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
     }
 
     function withdraw() external override {
-        require(isSettlementProcess(block.timestamp), "Active disputes in progress");
+        require(!isSettlementProcess(block.timestamp), "Active disputes in progress");
         require(oracles.length > 1, "Last oracle can't leave");
         uint256 amount = staked[msg.sender];
         require(amount > 1, "No tokens to withdraw");
@@ -229,8 +236,7 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         list.deleteByAddress(_predictionMarket);
     }
 
-    function finalizeOutcome(address _predictionMarket) public {
-        //switch to internal?
+    function finalizeOutcome(address _predictionMarket) internal {
         if (marketStatus[_predictionMarket].finalized == true) return;
 
         uint256 settlementPeriod = parameters.getOracleSettlementPeriod();
@@ -239,7 +245,7 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         if (
             marketStatus[_predictionMarket].dueDate + settlementPeriod + disputePeriod < block.timestamp &&
             marketStatus[_predictionMarket].startedDispute == false &&
-            reachedConsensus(_predictionMarket)
+            _reachedConsensus(_predictionMarket)
         ) {
             marketStatus[_predictionMarket].finalized = true;
             marketStatus[_predictionMarket].winningOutcome = oracleOutcome[oracles[0]][_predictionMarket];

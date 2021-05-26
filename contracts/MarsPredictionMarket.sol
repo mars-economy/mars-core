@@ -11,13 +11,10 @@ import "./Parameters.sol";
 import "./interfaces/ISettlement.sol";
 
 contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgradeable {
-    bytes16[] public outcomes;
-    //list of outcomes
-    address[] public outcomeTokens;
-    //list of tokens
+    bytes16[] outcomes;
 
-    uint256 public predictionTimeStart; //when contract was created
-    uint256 public predictionTimeEnd; //when buying stops
+    uint256 public predictionTimeStart;
+    uint256 public predictionTimeEnd;
     uint256 public predictorsNumber;
 
     uint256 public startSharePrice;
@@ -41,7 +38,6 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
     function initialize(
         address _token,
         uint256 _predictionTimeEnd,
-        // address _settlement,
         Market.Outcome[] memory outcomes,
         address owner,
         uint256 _startSharePrice,
@@ -66,11 +62,15 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         endSharePrice = _endSharePrice;
     }
 
-    function roundWeek(uint256 _date) public pure returns (uint256) {
+    function roundWeek(uint256 _date) internal pure returns (uint256) {
         return (_date / 7 days) * 7 days;
     }
 
-    function getSharePrice(uint256 _currentTime) public view returns (uint256) {
+    function getSharePrice(uint256 _currentTime) external view override returns (uint256) {
+        return _getSharePrice(_currentTime);
+    }
+
+    function _getSharePrice(uint256 _currentTime) internal view returns (uint256) {
         if (_currentTime > predictionTimeEnd || _currentTime < predictionTimeStart) return 0;
         return (((endSharePrice - startSharePrice) / (predictionTimeEnd - predictionTimeStart)) *
             (roundWeek(_currentTime - predictionTimeStart)) +
@@ -110,10 +110,10 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
 
             app[i].suspended = _currentTime > predictionTimeEnd ||
                 _currentTime < predictionTimeStart ||
-                !isPredictionProfitable(outcomesId, _currentTime, notFee, divisor)
+                !_isPredictionProfitable(outcomesId, _currentTime, notFee, divisor)
                 ? true
                 : false;
-            app[i].sharePrice = getSharePrice(_currentTime);
+            app[i].sharePrice = _getSharePrice(_currentTime);
         }
         return app;
     }
@@ -132,13 +132,12 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         string memory name
     ) internal {
         outcomes.push(uuid);
-        MarsERC20OutcomeToken newToken = new MarsERC20OutcomeToken("Mars Economy outcome token", 18, "MPO", owner());
 
-        outcomeTokens.push(address(newToken));
+        MarsERC20OutcomeToken newToken = new MarsERC20OutcomeToken("Mars Economy outcome token", 18, "MPO", owner());
         tokenOutcomeAddress[uuid] = address(newToken);
     }
 
-    function collectOracleFee() external {
+    function collectOracleFee() external override {
         require(settlement.oracleCorrectlyVoted(address(this), msg.sender));
 
         uint256 correctlyVoted = settlement.getCorrectlyVotedCount(address(this));
@@ -146,10 +145,12 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         require(token.transfer(msg.sender, oracleFeeAccumulated / correctlyVoted), "Failed to transfer amount");
     }
 
-    function collectProtocolFee() external onlyOwner {
-        if (settlement.getCorrectlyVotedCount(address(this)) == 0)
+    function collectProtocolFee() external override onlyOwner {
+        if (settlement.getCorrectlyVotedCount(address(this)) == 0 && winningOutcome != bytes16(0)) {
             require(token.transfer(parameters.getReceiver(), oracleFeeAccumulated + protocolFeeAccumulated), "Failed to transfer amount");
-        else require(token.transfer(parameters.getReceiver(), protocolFeeAccumulated), "Failed to transfer amount");
+            oracleFeeAccumulated = 0;
+        } else require(token.transfer(parameters.getReceiver(), protocolFeeAccumulated), "Failed to transfer amount");
+        protocolFeeAccumulated = 0;
     }
 
     function getReward() external override {
@@ -180,7 +181,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         require(token.transfer(msg.sender, reward), "MARS: Failed to transfer to buyer");
     }
 
-    function setPredictionTimeEnd(uint256 _newValue) external onlyOwner {
+    function setPredictionTimeEnd(uint256 _newValue) external override onlyOwner {
         require(_newValue < predictionTimeEnd, "MARKET: CAN ONLY DECREASE predictionTimeEnd");
         require(predictionTimeEnd > predictionTimeStart, "Endtime has to be more then start time");
         predictionTimeEnd = _newValue;
@@ -204,7 +205,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
 
         uint256 notFee = divisor - protocolFee - oracleFee;
 
-        uint256 _amountWithFee = (_amount * notFee * 1_000_000) / divisor / getSharePrice(block.timestamp);
+        uint256 _amountWithFee = (_amount * notFee * 1_000_000) / divisor / _getSharePrice(block.timestamp);
         oracleFeeAccumulated += (_amount * oracleFee) / divisor;
         protocolFeeAccumulated += (_amount * protocolFee) / divisor;
 
@@ -216,7 +217,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         predictorsNumber += 1;
         totalPredicted += (_amount * notFee) / divisor;
 
-        require(isPredictionProfitable(_outcome, block.timestamp, notFee, divisor), "Prediction is not profitable");
+        require(_isPredictionProfitable(_outcome, block.timestamp, notFee, divisor), "Prediction is not profitable");
         emit PredictionEvent(msg.sender, _outcome, _amountWithFee);
     }
 
@@ -225,16 +226,21 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         uint256 _currentTime,
         uint256 notFee,
         uint256 feeDivisor
-    ) public view returns (bool) {
+    ) external view override returns (bool) {
+        return _isPredictionProfitable(_outcome, _currentTime, notFee, feeDivisor);
+    }
+
+    function _isPredictionProfitable(
+        bytes16 _outcome,
+        uint256 _currentTime,
+        uint256 notFee,
+        uint256 feeDivisor
+    ) internal view returns (bool) {
         uint256 outcomeBalance = MarsERC20OutcomeToken(tokenOutcomeAddress[_outcome]).totalSupply();
 
         if (outcomeBalance != 0)
-            return !((getSharePrice(_currentTime) * notFee) / feeDivisor > (totalPredicted * 1_000_000) / outcomeBalance + 1); //+1 in case of rounding
+            return !((_getSharePrice(_currentTime) * notFee) / feeDivisor > (totalPredicted * 1_000_000) / outcomeBalance + 1); //+1 in case of rounding
         return true;
-    }
-
-    function getTokens() external view override returns (address[] memory) {
-        return outcomeTokens;
     }
 
     modifier outcomeDefined(bytes16 _outcome) {
@@ -250,7 +256,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         return tokenOutcomeAddress[outcomeUuid];
     }
 
-    function setParameters(address _newParameters) external onlyOwner {
+    function setParameters(address _newParameters) external override onlyOwner {
         parameters = Parameters(_newParameters);
     }
 }
