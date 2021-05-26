@@ -11,7 +11,8 @@ export var ADDR = {
   marsToken: "0x79CE12Ed5e31770C095D9092D5dC52CA96B28960",
   settlement: "0x79CE12Ed5e31770C095D9092D5dC52CA96B28960",
   predictionMarketFactory: "0xd01d78252Bf63d9b8AbF084d659b6857a37674C8",
-  register: "0x3f0Ae69BC1622149aFbA380711F1F89eE5674033"
+  register: "0x3f0Ae69BC1622149aFbA380711F1F89eE5674033",
+  parameters: ""
 }
 
 export async function populateMarkets(){
