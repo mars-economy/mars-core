@@ -5,7 +5,7 @@ import { expect } from "chai"
 import { BigNumberish, Signer } from "ethers"
 import { setgroups } from "node:process"
 import { AddressZero } from "@ethersproject/constants";
-import { MarsPredictionMarketFactory, Register, Settlement } from "../typechain"
+import { MarsPredictionMarketFactory, Register, Settlement, Parameters } from "../typechain"
 import { bytes32, wait, timeoutAppended, now, tokens } from "./utils/utils"
 
 describe("Register", async () => {
@@ -13,6 +13,7 @@ describe("Register", async () => {
     let register: Register
     let marsFactory: MarsPredictionMarketFactory
     let settlement: Settlement
+    let parameters: Parameters
 
     before(async () => {
       [owner] = await ethers.getSigners()
@@ -24,6 +25,12 @@ describe("Register", async () => {
         settlement = (await (await ethers.getContractFactory("Settlement"))
             .connect(owner)
             .deploy()) as Settlement
+
+        parameters = (await (await ethers.getContractFactory("Parameters"))
+            .connect(owner)
+            .deploy()) as Parameters
+        
+        parameters.initialize(AddressZero, 10, 20, 10000, 60*60*24, 60*60*24*7, 60*60*24*7, tokens(100000), tokens(20000), 0)
 
         settlement.connect(owner).initialize(AddressZero, AddressZero)
         

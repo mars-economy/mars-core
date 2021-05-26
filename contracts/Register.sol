@@ -11,6 +11,8 @@ import "./MarsPredictionMarket.sol";
 import "./MarsERC20OutcomeToken.sol";
 import "./MarsPredictionMarketFactory.sol";
 import "./Settlement.sol";
+import "./Parameters.sol";
+
 import "./libraries/Market.sol";
 
 contract Register is IRegister, Initializable, OwnableUpgradeable {
@@ -19,19 +21,16 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
     PredictionInfo[] predictionMarkets;
     OutcomeInfo[] outcomes;
 
-    uint256 oracleSettlementTimeout;
-    uint256 disputeTimeout;
     Settlement settlement;
+    Parameters parameters;
 
     mapping(bytes16 => uint256) public slot;
 
-    function initialize(address _settlement) external initializer {
+    function initialize(address _settlement, address _parameters) external initializer {
         __Ownable_init();
 
         settlement = Settlement(_settlement);
-
-        oracleSettlementTimeout = 1 days;
-        disputeTimeout = 7 days;
+        parameters = Parameters(_parameters);
     }
 
     function updateCategory(
@@ -136,22 +135,24 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         PredictionInfo[] memory pred = new PredictionInfo[](predictionMarkets.length);
         OutcomeInfo[] memory out = new OutcomeInfo[](outcomes.length);
 
-        //waiting -> predictiontimeEnd < currentTime < dueTime
+        uint256 oracleSettlementTimeout = parameters.getOracleSettlementPeriod();
+        uint256 disputeTimeout = parameters.getDisputePeriod();
 
         for (uint256 i = 0; i < predictionMarkets.length; i++) {
             pred[i] = predictionMarkets[i];
 
+            uint256 predictionTimeEnd = MarsPredictionMarket(pred[i].id).getPredictionTimeEnd();
+
             if (
                 MarsPredictionMarket(pred[i].id).winningOutcome() != bytes16(0) ||
-                (pred[i].dueDate + oracleSettlementTimeout + disputeTimeout > _currentTime && settlement.reachedConsensus(pred[i].id))
+                (pred[i].dueDate + oracleSettlementTimeout + disputeTimeout < _currentTime && settlement.reachedConsensus(pred[i].id))
             ) pred[i].state = PredictionMarketState.Closed;
-            else if (MarsPredictionMarket(pred[i].id).getPredictionTimeEnd() < _currentTime && _currentTime < pred[i].dueDate)
-                pred[i].state = PredictionMarketState.Waiting;
-            else if (pred[i].dueDate > _currentTime) pred[i].state = PredictionMarketState.Open;
+            else if (predictionTimeEnd < _currentTime && _currentTime < pred[i].dueDate) pred[i].state = PredictionMarketState.Waiting;
+            else if (predictionTimeEnd > _currentTime) pred[i].state = PredictionMarketState.Open;
             else pred[i].state = PredictionMarketState.Settlement;
 
             pred[i].predictorsNumber = MarsPredictionMarket(pred[i].id).predictorsNumber();
-            pred[i].predictionTimeEnd = MarsPredictionMarket(pred[i].id).getPredictionTimeEnd();
+            pred[i].predictionTimeEnd = predictionTimeEnd;
         }
 
         for (uint256 i = 0; i < outcomes.length; i++) {
@@ -163,21 +164,5 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         }
 
         return (categories, milestones, pred, out);
-    }
-
-    function setOracleSettlementTimeout(uint256 _oracleSettlementTimeout) external onlyOwner {
-        oracleSettlementTimeout = _oracleSettlementTimeout;
-    }
-
-    function setDisputeTimeout(uint256 _disputeTimeout) external onlyOwner {
-        disputeTimeout = _disputeTimeout;
-    }
-
-    function getOracleSettlementTimeout() external returns (uint256) {
-        return oracleSettlementTimeout;
-    }
-
-    function getDisputeTimeout() external returns (uint256) {
-        return disputeTimeout;
     }
 }

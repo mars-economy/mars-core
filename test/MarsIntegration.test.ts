@@ -43,23 +43,21 @@ describe("Integration", async () => {
     daiToken = (await (await ethers.getContractFactory("TestERC20")).deploy(tokens(1_000_000), "Test daiToken", 18, "TTK")) as TestERC20
     marsToken = (await (await ethers.getContractFactory("TestERC20")).deploy(tokens(20_000_000), "Test marsToken", 18, "TTK")) as TestERC20
 
-    for (const user of users) {
-      await daiToken.transfer(await user.getAddress(), initialBalance)
+    for (let i = 0; i < 5; i++) {
+      await daiToken.transfer(await users[i].getAddress(), initialBalance)
     }
 
     parameters = (await (await ethers.getContractFactory("Parameters"))
     .connect(owner)
     .deploy()) as Parameters
 
-    parameters.initialize(await users[8].getAddress())
+    parameters.initialize(await users[8].getAddress(), 10, 20, 10000, 60*60*24, 60*60*24*7, 60*60*24*7, tokens(100000), tokens(20000), 0)
 
     settlement = (await (await ethers.getContractFactory("Settlement"))
       .connect(owner)
       .deploy()) as Settlement
 
     settlement.connect(owner).initialize(marsToken.address, parameters.address)
-
-    // await settlement.test() //left it inside for testing the linked list
 
     predictionMarketFactory = (await (await ethers.getContractFactory("MarsPredictionMarketFactory"))
       .connect(owner)
@@ -93,8 +91,8 @@ describe("Integration", async () => {
       [{uuid: YES, name: "YES", position: 1}], tokens(1), tokens(10)
     )
 
-  const MILESTONE2 = ethers.utils.arrayify("0x13a12ea1f1cb4b6e96a3fbdfcf8c9815")
-  let tx2 = await predictionMarketFactory.connect(owner).createMarket(
+    const MILESTONE2 = ethers.utils.arrayify("0x13a12ea1f1cb4b6e96a3fbdfcf8c9815")
+    let tx2 = await predictionMarketFactory.connect(owner).createMarket(
     daiToken.address, timeEnd, [{uuid: YES, name: "YES", position: 1}], tokens(1), tokens(10)
   ) //testing creation of second market. Used to be a bug
 
@@ -108,6 +106,7 @@ describe("Integration", async () => {
     //second way to add outcomes
     await predictionMarket.connect(owner).addOutcome(NO, 2, "NO")
     await predictionMarket.connect(owner).setSettlement(settlement.address)
+    await predictionMarket.connect(owner)["setParameters(address)"](parameters.address)
 
     expect(await predictionMarket.getNumberOfOutcomes()).to.be.equal(2)
 
@@ -157,8 +156,15 @@ describe("Integration", async () => {
 
     await checkBalances([users[0], users[1]], [tokens(10994), tokens(9000)])
 
-    // await predictionMarket.sendFeesToParameters(parameters.address)
-    // expect(await daiToken.balanceOf(parameters.address)).to.be.equal(tokens(6)) // 2000 * 0.997 = 6
+    //checking if fee collection works
+    expect(await predictionMarket.oracleFeeAccumulated()).to.be.equal(tokens(4))
+    expect(await predictionMarket.protocolFeeAccumulated()).to.be.equal(tokens(2))
+
+    await predictionMarket.connect(owner).collectProtocolFee()
+    expect(await daiToken.balanceOf(await users[8].getAddress())).to.be.equal(tokens(2))
+
+    await predictionMarket.connect(oracle1_).collectOracleFee()
+    expect(await daiToken.balanceOf(oracle1)).to.be.equal(tokens(2)) //oracleFeeAccumulated = 4 tokens, 4 / 2(oracles) = 2
   })
 
 

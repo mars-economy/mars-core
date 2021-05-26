@@ -12,8 +12,9 @@ library StructuredLinkedList {
 
     struct List {
         mapping(uint256 => Node) nodes;
-        uint256 nodeNumber;
+        uint256 nodeNumber; // TODO: combine to one uint
         uint256 count;
+        uint256 firstNodeNext; //= count;
     }
 
     function pushFront(
@@ -54,11 +55,9 @@ library StructuredLinkedList {
         }
     }
 
-    function getFirst(List storage self) internal view returns (uint256) {
+    function getFirstDate(List storage self) internal view returns (uint256) {
         uint256 id = self.nodes[0].next;
-        Node memory tmp = self.nodes[id];
-
-        return tmp.dueDate;
+        return self.nodes[id].dueDate;
     }
 
     function deleteByAddress(List storage self, address _addr) internal {

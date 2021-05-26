@@ -7,48 +7,83 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 contract Parameters is Initializable, OwnableUpgradeable {
     address receiver; //wallet that receives protocol fee
 
-    uint256 protocolFee = 33334;
-    uint256 oracleFee = 66666;
+    uint256 protocolFee;
+    uint256 oracleFee;
+    uint256 divisor;
 
-    uint256 divisor = 100000;
+    uint256 oracleSettlementPeriod;
+    uint256 disputePeriod;
+    uint256 votingPeriod;
 
-    function initialize(address _receiver) external initializer {
+    uint256 oracleAcceptanceAmount;
+    uint256 proposalSubmitPrice;
+    uint256 disputeFeeAmount;
+
+    function initialize(
+        address _receiver,
+        uint256 _protocolFee,
+        uint256 _oracleFee,
+        uint256 _divisor,
+        uint256 _oracleSettlementPeriod,
+        uint256 _disputePeriod,
+        uint256 _votingPeriod,
+        uint256 _oracleAcceptanceAmount,
+        uint256 _disputeFeeAmount,
+        uint256 _proposalSubmitPrice
+    ) external initializer {
         __Ownable_init();
 
         receiver = _receiver;
+        protocolFee = _protocolFee; //100
+        oracleFee = _oracleFee; //200
+        divisor = _divisor; //10000
+
+        oracleSettlementPeriod = _oracleSettlementPeriod;
+        disputePeriod = _disputePeriod;
+        votingPeriod = _votingPeriod;
+
+        oracleAcceptanceAmount = oracleAcceptanceAmount;
+        disputeFeeAmount = disputeFeeAmount;
+        proposalSubmitPrice = proposalSubmitPrice;
     }
 
-    function getOracleFee() external view returns (uint256, uint256) {
-        return (oracleFee, divisor);
+    function getReceiver() external view returns (address) {
+        return receiver;
     }
 
-    function getProtocolFee()
-        external
-        view
-        returns (
-            uint256,
-            uint256,
-            address
-        )
-    {
-        return (protocolFee, divisor, receiver);
+    function getProtocolFee() external view returns (uint256) {
+        return protocolFee;
     }
 
-    function setReceiver(address _newValue) external onlyOwner {
-        receiver = _newValue;
+    function getOracleFee() external view returns (uint256) {
+        return oracleFee;
     }
 
-    function setProtocolFee(uint256 _newValue) external onlyOwner {
-        protocolFee = _newValue;
+    function getDivisor() external view returns (uint256) {
+        return divisor;
     }
 
-    function setOracleFee(uint256 _newValue) external onlyOwner {
-        oracleFee = _newValue;
+    function getOracleSettlementPeriod() external view returns (uint256) {
+        return oracleSettlementPeriod;
     }
 
-    function setDivisor(uint256 _newValue) external onlyOwner {
-        divisor = _newValue;
+    function getDisputePeriod() external view returns (uint256) {
+        return disputePeriod;
     }
 
-    //getters setters
+    function getVotingPeriod() external view returns (uint256) {
+        return votingPeriod;
+    }
+
+    function getOracleAcceptanceAmount() external view returns (uint256) {
+        return oracleAcceptanceAmount;
+    }
+
+    function getDisputeFeeAmount() external view returns (uint256) {
+        return disputeFeeAmount;
+    }
+
+    function getProposalSubmitPrice() external view returns (uint256) {
+        return proposalSubmitPrice;
+    }
 }

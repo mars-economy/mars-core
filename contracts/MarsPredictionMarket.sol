@@ -10,8 +10,6 @@ import "./libraries/Market.sol";
 import "./Parameters.sol";
 import "./interfaces/ISettlement.sol";
 
-import "hardhat/console.sol";
-
 contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgradeable {
     bytes16[] public outcomes;
     //list of outcomes
@@ -25,12 +23,11 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
     uint256 public startSharePrice;
     uint256 public endSharePrice;
 
-    address public token; //ERC20 token used to buy shares for outcomes
+    IERC20 public token; //ERC20 token used to buy shares for outcomes
     bytes16 public winningOutcome;
-    uint256 public notFee;
-    uint256 public feeDivisor;
-    uint256 feeAccumulated;
-    // bool feeSent;
+
+    uint256 public oracleFeeAccumulated;
+    uint256 public protocolFeeAccumulated;
 
     mapping(bytes16 => address) public tokenOutcomeAddress;
     //outcome => address of token
@@ -63,10 +60,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         }
 
         // settlement = ISettlement(_settlement);
-        token = _token;
-
-        notFee = 9970; // 0.3%
-        feeDivisor = 10000;
+        token = IERC20(_token);
 
         startSharePrice = _startSharePrice;
         endSharePrice = _endSharePrice;
@@ -76,8 +70,6 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         return (_date / 7 days) * 7 days;
     }
 
-    // startSharePrice = 1 ether;
-    // endSharePrice = 10 ether;
     function getSharePrice(uint256 _currentTime) public view returns (uint256) {
         if (_currentTime > predictionTimeEnd || _currentTime < predictionTimeStart) return 0;
         return (((endSharePrice - startSharePrice) / (predictionTimeEnd - predictionTimeStart)) *
@@ -93,6 +85,11 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
     {
         Market.UserOutcomeInfo[] memory app = new Market.UserOutcomeInfo[](outcomes.length);
 
+        uint256 protocolFee = parameters.getProtocolFee();
+        uint256 oracleFee = parameters.getOracleFee();
+        uint256 divisor = parameters.getDivisor();
+        uint256 notFee = divisor - protocolFee - oracleFee;
+
         for (uint256 i = 0; i < outcomes.length; i++) {
             bytes16 outcomesId = outcomes[i];
             address outcome = tokenOutcomeAddress[outcomesId];
@@ -101,8 +98,8 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
             app[i].stakeAmount = MarsERC20OutcomeToken(outcome).stakedAmount(_wallet);
             uint256 totalSupply = MarsERC20OutcomeToken(outcome).totalSupply();
             if (totalSupply != 0) {
-                uint256 amount = (MarsERC20OutcomeToken(outcome).balanceOf(_wallet) * totalPredicted) / totalSupply;
-                if (winningOutcome == bytes16(0) || winningOutcome == outcomesId) app[i].currentReward = amount;
+                if (winningOutcome == bytes16(0) || winningOutcome == outcomesId)
+                    app[i].currentReward = (MarsERC20OutcomeToken(outcome).balanceOf(_wallet) * totalPredicted) / totalSupply;
             }
             //else app[i].currentReward = 0, but that goes by default
             app[i].rewardReceived = outcomesId == winningOutcome ? claimed[_wallet] : false;
@@ -113,7 +110,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
 
             app[i].suspended = _currentTime > predictionTimeEnd ||
                 _currentTime < predictionTimeStart ||
-                !isPredictionProfitable(outcomesId, _currentTime)
+                !isPredictionProfitable(outcomesId, _currentTime, notFee, divisor)
                 ? true
                 : false;
             app[i].sharePrice = getSharePrice(_currentTime);
@@ -137,25 +134,22 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         outcomes.push(uuid);
         MarsERC20OutcomeToken newToken = new MarsERC20OutcomeToken("Mars Economy outcome token", 18, "MPO", owner());
 
-        // newToken.initialize("Mars Economy outcome token", 18, "MPO"); // changed from abi.encodePacked(uuid)
-        // newToken.transferOwnership(owner());
-
         outcomeTokens.push(address(newToken));
         tokenOutcomeAddress[uuid] = address(newToken);
     }
 
     function collectOracleFee() external {
-        require(settlement.oracleCorrectlyVoted(address(this)));
+        require(settlement.oracleCorrectlyVoted(address(this), msg.sender));
 
-        (uint256 fee, uint256 divisor) = parameters.getOracleFee();
+        uint256 correctlyVoted = settlement.getCorrectlyVotedCount(address(this));
 
-        require(IERC20(token).transfer(msg.sender, (feeAccumulated * fee) / divisor), "Failed to transfer amount");
+        require(token.transfer(msg.sender, oracleFeeAccumulated / correctlyVoted), "Failed to transfer amount");
     }
 
     function collectProtocolFee() external onlyOwner {
-        (uint256 fee, uint256 divisor, address receiver) = parameters.getProtocolFee();
-
-        require(IERC20(token).transfer(receiver, (feeAccumulated * fee) / divisor), "Failed to transfer amount");
+        if (settlement.getCorrectlyVotedCount(address(this)) == 0)
+            require(token.transfer(parameters.getReceiver(), oracleFeeAccumulated + protocolFeeAccumulated), "Failed to transfer amount");
+        else require(token.transfer(parameters.getReceiver(), protocolFeeAccumulated), "Failed to transfer amount");
     }
 
     function getReward() external override {
@@ -165,13 +159,12 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
             winningOutcome = _winningOutcome;
         }
 
-        require(claimed[msg.sender] == false, "USER ALREADY CLAIMED");
+        require(claimed[msg.sender] == false, "User already claimed");
 
         claimed[msg.sender] = true;
 
-        uint256 userOutcomeTokens = MarsERC20OutcomeToken(tokenOutcomeAddress[winningOutcome]).balanceOf(msg.sender);
-        uint256 outcomeBalance = MarsERC20OutcomeToken(tokenOutcomeAddress[winningOutcome]).totalSupply();
-        // uint256 _stakeAmount = MarsERC20OutcomeToken(tokenOutcomeAddress[winningOutcome]).stakedAmount(msg.sender);
+        uint256 userOutcomeTokens = MarsERC20OutcomeToken(tokenOutcomeAddress[_winningOutcome]).balanceOf(msg.sender);
+        uint256 outcomeBalance = MarsERC20OutcomeToken(tokenOutcomeAddress[_winningOutcome]).totalSupply();
 
         outcomeBalance = outcomeBalance == 0 ? 1 : outcomeBalance;
 
@@ -180,11 +173,11 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         // / amount of tokens all owners put on the winning outcome
 
         require(
-            MarsERC20OutcomeToken(tokenOutcomeAddress[winningOutcome]).transferFrom(msg.sender, address(this), userOutcomeTokens),
-            "MARS: FAILED TO TRANSFER FROM BUYER"
+            MarsERC20OutcomeToken(tokenOutcomeAddress[_winningOutcome]).transferFrom(msg.sender, address(this), userOutcomeTokens),
+            "MARS: Failed to transfer from buyer"
         );
 
-        require(IERC20(token).transfer(msg.sender, reward), "MARS: FAILED TO TRANSFER TO BUYER");
+        require(token.transfer(msg.sender, reward), "MARS: Failed to transfer to buyer");
     }
 
     function setPredictionTimeEnd(uint256 _newValue) external onlyOwner {
@@ -202,25 +195,37 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
     }
 
     function predict(bytes16 _outcome, uint256 _amount) external override outcomeDefined(_outcome) {
-        require(block.timestamp < predictionTimeEnd, "MARS: PREDICTION TIME HAS PASSED");
-        require(IERC20(token).transferFrom(msg.sender, address(this), _amount), "MARS: FAILED TO TRANSFER FROM BUYER");
+        require(block.timestamp < predictionTimeEnd, "MARS: Prediction time has passed");
+        require(token.transferFrom(msg.sender, address(this), _amount), "MARS: Failed to transfer from buyer");
 
-        uint256 _amountWithFee = (_amount * notFee * 1_000_000) / feeDivisor / getSharePrice(block.timestamp);
-        feeAccumulated += _amount - (_amount * notFee) / feeDivisor;
+        uint256 protocolFee = parameters.getProtocolFee();
+        uint256 oracleFee = parameters.getOracleFee();
+        uint256 divisor = parameters.getDivisor();
+
+        uint256 notFee = divisor - protocolFee - oracleFee;
+
+        uint256 _amountWithFee = (_amount * notFee * 1_000_000) / divisor / getSharePrice(block.timestamp);
+        oracleFeeAccumulated += (_amount * oracleFee) / divisor;
+        protocolFeeAccumulated += (_amount * protocolFee) / divisor;
 
         require(
-            MarsERC20OutcomeToken(tokenOutcomeAddress[_outcome]).mint(msg.sender, _amountWithFee, (_amount * notFee) / feeDivisor),
-            "MARS: FAILED TO TRANSFER TO BUYER"
+            MarsERC20OutcomeToken(tokenOutcomeAddress[_outcome]).mint(msg.sender, _amountWithFee, (_amount * notFee) / divisor),
+            "MARS: Failed to transfer to buyer"
         );
 
         predictorsNumber += 1;
-        totalPredicted += (_amount * notFee) / feeDivisor;
+        totalPredicted += (_amount * notFee) / divisor;
 
-        require(isPredictionProfitable(_outcome, block.timestamp), "Prediction is not profitable");
+        require(isPredictionProfitable(_outcome, block.timestamp, notFee, divisor), "Prediction is not profitable");
         emit PredictionEvent(msg.sender, _outcome, _amountWithFee);
     }
 
-    function isPredictionProfitable(bytes16 _outcome, uint256 _currentTime) public view returns (bool) {
+    function isPredictionProfitable(
+        bytes16 _outcome,
+        uint256 _currentTime,
+        uint256 notFee,
+        uint256 feeDivisor
+    ) public view returns (bool) {
         uint256 outcomeBalance = MarsERC20OutcomeToken(tokenOutcomeAddress[_outcome]).totalSupply();
 
         if (outcomeBalance != 0)
@@ -233,7 +238,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
     }
 
     modifier outcomeDefined(bytes16 _outcome) {
-        require(tokenOutcomeAddress[_outcome] != address(0), "MARS: OUTCOME NOT DEFINED");
+        require(tokenOutcomeAddress[_outcome] != address(0), "Mars: outcome not defined");
         _;
     }
 
