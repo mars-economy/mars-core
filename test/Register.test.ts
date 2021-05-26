@@ -31,17 +31,17 @@ describe("Register", async () => {
             .deploy()) as Parameters
         
         parameters.initialize(AddressZero, 10, 20, 10000, 60*60*24, 60*60*24*7, 60*60*24*7, tokens(100000), tokens(20000), 0, 0)
-
-        settlement.connect(owner).initialize(AddressZero, AddressZero)
         
-        register = await upgrades.deployProxy(registerContract, [settlement.address]) as Register
-
+        settlement.connect(owner).initialize(AddressZero, parameters.address)
+        
+        register = await upgrades.deployProxy(registerContract, [settlement.address, parameters.address]) as Register
+        
         marsFactory = (await (await ethers.getContractFactory("MarsPredictionMarketFactory"))
             .connect(owner)
             .deploy()) as MarsPredictionMarketFactory
         
         marsFactory.connect(owner).initialize(settlement.address)
-
+        
     })
   
     it("returns no values", async () => {

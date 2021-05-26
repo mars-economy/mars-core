@@ -112,7 +112,8 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
         require(block.timestamp < dueDate + votingPeriod, "Oracle voting has ended");
 
         marketStatus[_predictionMarket].oraclesVoted = marketStatus[_predictionMarket].oraclesVoted + 1;
-
+        marketStatus[_predictionMarket].oraclesCountAtStart = oracles.length; //find a better place for this
+        
         oracleOutcome[msg.sender][_predictionMarket] = _outcome;
         emit OracleVotedEvent(msg.sender, _predictionMarket, _outcome);
     }
@@ -156,10 +157,9 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
     }
 
     function _reachedConsensus(address _predictionMarket) internal view returns (bool) {
-        // if (marketStatus[_predictionMarket].oraclesVoted >= oracles.length) return false;
-
         uint256 count = marketStatus[_predictionMarket].oraclesVoted;
-        if (oracles.length == 0 || count == 0) return false;
+        if (count < marketStatus[_predictionMarket].oraclesCountAtStart) return false;
+        if (count == 0) return false;
 
         for (uint256 i = 1; i < count; i++)
             if (oracleOutcome[oracles[i - 1]][_predictionMarket] != oracleOutcome[oracles[i]][_predictionMarket]) return false;
