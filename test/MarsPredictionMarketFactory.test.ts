@@ -4,7 +4,7 @@ import { Signer, BigNumber } from "ethers"
 import { LogDescription } from "ethers/lib/utils"
 import { deployMars, Mars } from "./utils/mars"
 import { bytes32, timeoutAppended } from "./utils/utils"
-import { IPredictionMarketFactory } from "../typechain"
+import { IPredictionMarketFactory, MarsPredictionMarket__factory } from "../typechain"
 
 enum MilestoneStatus {
   Historical,
@@ -146,9 +146,12 @@ describe("Prediction Market Factory", async () => {
       "market 1",
       "desc",
       mars.marsToken.address,
-      await timeoutAppended(ethers.provider, 5)
+      await timeoutAppended(ethers.provider, 5),
+      []
     )
+
     await expect(tx3).not.to.be.reverted
+
 
     const events = await getPredictionMarketCreatedEvents((await tx3).blockNumber)
 
@@ -188,29 +191,34 @@ describe("Prediction Market Factory", async () => {
       "market 1",
       "desc",
       mars.marsToken.address,
-      await timeoutAppended(ethers.provider, 5)
+      await timeoutAppended(ethers.provider, 5),
+      []
     )
     await expect(tx3).not.to.be.reverted
 
     const events1 = await getPredictionMarketCreatedEvents((await tx3).blockNumber)
 
     expect(events1.length).to.be.eq(1)
-    const predictionMarket = events1[0].args.contractAddress
+    const _newMarket = events1[0].args.contractAddress
+    const predictionMarket = MarsPredictionMarket__factory.connect(_newMarket, owner)
 
-    const tx4 = mars.predictionMarketFactory.addOutcome(
-      predictionMarket,
+
+    const tx4 = predictionMarket.addOutcome(
       ethers.utils.arrayify("0xc53ef995914f4b409b22e6128c2bcf17"),
       1,
       "outcome 1"
     )
     await expect(tx4).not.to.be.reverted
 
-    const events2 = await getOutcomeChangedEvents((await tx4).blockNumber)
+    //Prediction market doesn't emit an event
+  //   const events2 = await getOutcomeChangedEvents((await tx4).blockNumber)
 
-    expect(events2.length).to.be.eq(1)
-    expect(events2[0].args.uuid).to.be.eq("0xc53ef995914f4b409b22e6128c2bcf17")
-    expect(events2[0].args.position).to.be.eq(1)
-    expect(events2[0].args.name).to.be.eq("outcome 1")
-    expect(events2[0].args.predictionMarket).to.be.eq(predictionMarket)
+  //   console.log(events2)
+
+  //   expect(events2.length).to.be.eq(1)
+  //   expect(events2[0].args.uuid).to.be.eq("0xc53ef995914f4b409b22e6128c2bcf17")
+  //   expect(events2[0].args.position).to.be.eq(1)
+  //   expect(events2[0].args.name).to.be.eq("outcome 1")
+  //   expect(events2[0].args.predictionMarket).to.be.eq(predictionMarket)
   })
 })

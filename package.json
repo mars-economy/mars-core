@@ -15,6 +15,7 @@
     "lint:check": "npx eslint --ext .js,.ts,.json ./",
     "format": "yarn prettier && yarn lint",
     "deploy": "npx hardhat run --network bsctestnet deploy/deploy.ts",
+    "coverage": "npx hardhat coverage",
     "deploy-bscmainnet": "npx hardhat run --network bscmainnet deploy/deploy.ts"
   },
   "devDependencies": {

@@ -1,169 +1,216 @@
 // SPDX-License-Identifier: MIT
 // pragma solidity >=0.8.0 <0.9.0;
 
-// import "./dependencies/libraries/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-// import "./dependencies/libraries/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./dependencies/tokens/IERC20.sol";
-import "./interfaces/IPredictionMarket.sol";
-import "./interfaces/IMarsGovernance.sol";
+import "./dependencies/libraries/StructuredLinkedList.sol";
+import "./MarsPredictionMarket.sol";
+import "./Parameters.sol";
 import "./interfaces/ISettlement.sol";
 
-import "hardhat/console.sol"; //TODO: REMOVE
-
 contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
-    mapping(address => uint256) public staked; //how much a oracle has staked,
+    using StructuredLinkedList for StructuredLinkedList.List;
+    StructuredLinkedList.List list;
+
     //uint = 1 -> added and not staked,
     //uint > 1 -> accepted and staked,
     //uint == 0 -> not added
-
-    // mapping(address => mapping(address => mapping(bytes16=>uint))) oracleOutcome;
-    mapping(address => mapping(address => bytes16)) public oracleOutcome;
-    //oracle => prediction => outcome
+    mapping(address => uint256) public staked; //how much a oracle has staked,
+    mapping(address => mapping(address => bytes16)) public oracleOutcome; //oracle => prediction => outcome
     mapping(address => MarketStatus) public marketStatus;
 
-    uint256 oracleAcceptanceAmount;
-    uint256 disputeFeeAmount;
-
     address[] oracles;
-    address marsToken;
+    IERC20 marsToken;
+    Parameters parameters;
 
-    uint256 public timeToOpenDispute;
-    uint256 public votingPeriod;
-
-    uint256 public startedDisputes;
-
-    function initialize(address _marsToken) external initializer {
+    function initialize(address _marsToken, address _parameters) external initializer {
         __Ownable_init();
 
-        marsToken = _marsToken;
-
-        timeToOpenDispute = 60 * 60 * 24 * 7;
-        votingPeriod = 60 * 60 * 24;
-
-        oracleAcceptanceAmount = 1_000_000; // * 10**18;
-        disputeFeeAmount = 100_000; // * 10**18;
+        marsToken = IERC20(_marsToken);
+        parameters = Parameters(_parameters);
     }
 
-    function registerMarket(
-        address _predictionMarket,
-        bytes16[] memory _outcomes,
-        uint256 _votingEnd
-    ) external override onlyOwner {
-        marketStatus[_predictionMarket].outcomes = _outcomes;
-        marketStatus[_predictionMarket].votingEnd = _votingEnd;
+    function isSettlementProcess(uint256 _currentTime) internal view returns (bool) {
+        uint256 _dueDate = list.getFirstDate();
+
+        return _dueDate != 0 && _dueDate <= _currentTime;
+    }
+
+    function registerMarket(address _predictionMarket, uint256 _dueDate) external override onlyOwner {
+        list.pushSorted(_dueDate, _predictionMarket);
+
+        marketStatus[_predictionMarket].dueDate = _dueDate;
     }
 
     function addOracle(address _newOracle) external override onlyOwner {
-        require(staked[_newOracle] == 0, "ORACLE ADLREADY ADDED");
+        require(staked[_newOracle] == 0, "Oracle adlready added");
 
         staked[_newOracle] = 1;
-        emit PotentialOracleEvent(msg.sender);
+        emit PotentialOracleEvent(_newOracle);
     }
 
-    function find(address value) internal returns (uint256) {
+    function findOracle(address value) internal returns (uint256) {
         uint256 i = 0;
-        while (oracles[i] != value) {
+        while (i < oracles.length && oracles[i] != value) {
             i++;
         }
         return i;
     }
 
-    function removeOracle(address oracle) external override onlyOwner {
-        require(staked[oracle] > 0, "ORACLE NOT ADDED");
-
-        staked[oracle] = 0;
-
-        uint256 index = find(oracle);
-
+    function _removeOracle(address oracle) internal {
+        uint256 index = findOracle(oracle);
         oracles[index] = oracles[oracles.length - 1];
         oracles.pop();
     }
 
+    function removeOracle(address oracle) external override onlyOwner {
+        require(!isSettlementProcess(block.timestamp), "Active disputes in progress");
+
+        uint256 amount = staked[oracle];
+        require(amount > 0, "Oracle not added");
+        staked[oracle] = 0;
+
+        if (amount > 1) marsToken.transfer(oracle, amount);
+
+        _removeOracle(oracle);
+    }
+
     function acceptAndStake() external override {
-        require(staked[msg.sender] == 1, "NOT ADDED BY GOVERNANCE");
-        require(IERC20(marsToken).transferFrom(msg.sender, address(this), oracleAcceptanceAmount), "FAILED TO TRANSFER AMOUNT");
+        uint256 stakedAmount = staked[msg.sender];
+        require(stakedAmount != 0, "Not added by governance");
+        uint256 oracleAcceptanceAmount = parameters.getOracleAcceptanceAmount();
 
-        oracles.push(msg.sender);
+        if (stakedAmount == 1) {
+            require(!isSettlementProcess(block.timestamp), "Active disputes in progress");
+            require(marsToken.transferFrom(msg.sender, address(this), oracleAcceptanceAmount), "Failed to transfer amount");
+            emit OracleAcceptedEvent(msg.sender);
+            oracles.push(msg.sender);
+        } else if (stakedAmount < oracleAcceptanceAmount)
+            require(marsToken.transferFrom(msg.sender, address(this), oracleAcceptanceAmount - stakedAmount), "Failed to transfer amount");
+        else require(marsToken.transfer(msg.sender, stakedAmount - oracleAcceptanceAmount), "Failed to transfer amount");
+
         staked[msg.sender] = oracleAcceptanceAmount;
-
-        emit OracleAcceptedEvent(msg.sender, oracleAcceptanceAmount);
     }
 
     function voteWinningOutcome(address _predictionMarket, bytes16 _outcome) external override {
-        require(marketStatus[_predictionMarket].votingEnd != 0, "MARKET NOT REGISTERED");
-        require(staked[msg.sender] > 1, "ONLY ORACLES CAN VOTE");
+        uint256 dueDate = marketStatus[_predictionMarket].dueDate;
+        require(dueDate != 0, "Market not registered");
 
-        require(block.timestamp > marketStatus[_predictionMarket].votingEnd, "VOTING PERIOD HASN'T ENDED YET");
-        require(block.timestamp < marketStatus[_predictionMarket].votingEnd + votingPeriod, "VOTING PERIOD HAS ENDED");
+        uint256 oracleAcceptanceAmount = parameters.getOracleAcceptanceAmount();
+        require(staked[msg.sender] >= oracleAcceptanceAmount, "Only staked oracles can vote");
+        require(oracleOutcome[msg.sender][_predictionMarket] == bytes16(0), "Oracle has already voted");
 
-        //TODO: check if vote is defined, another mapping?
+        require(MarsPredictionMarket(_predictionMarket).tokenOutcomeAddress(_outcome) != address(0), "Outcome not defined");
+
+        uint256 votingPeriod = parameters.getVotingPeriod();
+        require(block.timestamp >= dueDate, "Due date hasn't come yet");
+        require(block.timestamp < dueDate + votingPeriod, "Oracle voting has ended");
+
         marketStatus[_predictionMarket].oraclesVoted = marketStatus[_predictionMarket].oraclesVoted + 1;
+        marketStatus[_predictionMarket].oraclesCountAtStart = oracles.length; //find a better place for this
 
         oracleOutcome[msg.sender][_predictionMarket] = _outcome;
         emit OracleVotedEvent(msg.sender, _predictionMarket, _outcome);
     }
 
-    //for mars holders, costs 100k mars tokens, can be activated only if consensus was reached
     function openDispute(address _predictionMarket) external override {
-        require(block.timestamp >= marketStatus[_predictionMarket].votingEnd, "VOTING PERIOD HASN'T ENDED");
-        require(block.timestamp <= marketStatus[_predictionMarket].votingEnd + 7 days, "7 days have passed");
+        uint256 votingPeriod = parameters.getVotingPeriod();
+        uint256 disputeTimeout = parameters.getDisputePeriod();
+        uint256 dueDate = marketStatus[_predictionMarket].dueDate;
+        require(block.timestamp >= dueDate + votingPeriod, "Still early to open dispute");
+        require(block.timestamp < dueDate + votingPeriod + disputeTimeout, "Time to open dispute has passed");
+        require(marketStatus[_predictionMarket].finalized == false, "Prediction is finalized");
+        require(marketStatus[_predictionMarket].startedDispute == false, "Dispute has started");
 
-        require(reachedConsensus(_predictionMarket), "CONSENSUS HAS BEEN REACHED");
+        require(_reachedConsensus(_predictionMarket), "Consensus has not been reached");
 
+        uint256 disputeFeeAmount = parameters.getDisputeFeeAmount();
         marketStatus[_predictionMarket].startedDispute = true;
+        marketStatus[_predictionMarket].disputeOpenner = msg.sender;
+        marketStatus[_predictionMarket].disputeStake = disputeFeeAmount;
 
-        require(IERC20(marsToken).transferFrom(msg.sender, address(this), disputeFeeAmount), "FAILED TO TRANSFER AMOUNT");
+        require(marsToken.transferFrom(msg.sender, address(this), disputeFeeAmount), "Failed to transfer amount");
 
-        IMarsGovernance(owner()).changeOutcome(_predictionMarket, marketStatus[_predictionMarket].outcomes);
-
-        startedDisputes += 1;
+        // IMarsGovernance(owner()).changeOutcome(_predictionMarket, marketStatus[_predictionMarket].outcomes);
     }
 
-    //for all users, free of cost, can be activated only if consensus wasn't reached
     function startVoting(address _predictionMarket) external override {
-        require(block.timestamp >= marketStatus[_predictionMarket].votingEnd, "VOTING PERIOD HASN'T ENDED");
-        require(block.timestamp <= marketStatus[_predictionMarket].votingEnd + 7 days, "7 days have passed");
+        uint256 votingPeriod = parameters.getVotingPeriod();
+        require(block.timestamp >= marketStatus[_predictionMarket].dueDate + votingPeriod, "Still early to start voting");
+        require(marketStatus[_predictionMarket].finalized == false, "Prediction is finalized");
+        require(marketStatus[_predictionMarket].startedDispute == false, "Dispute has started");
 
-        require(!reachedConsensus(_predictionMarket), "CONSENSUS HAS NOT BEEN REACHED");
+        require(!_reachedConsensus(_predictionMarket), "Consensus has been reached");
 
         marketStatus[_predictionMarket].startedDispute = true;
 
-        IMarsGovernance(owner()).changeOutcome(_predictionMarket, marketStatus[_predictionMarket].outcomes);
-
-        startedDisputes += 1;
+        // IMarsGovernance(owner()).changeOutcome(_predictionMarket, marketStatus[_predictionMarket].outcomes);
     }
 
-    function reachedConsensus(address _predictionMarket) public view returns (bool) {
-        if (marketStatus[_predictionMarket].oraclesVoted != oracles.length) return false;
+    function reachedConsensus(address _predictionMarket) external view override returns (bool) {
+        return _reachedConsensus(_predictionMarket);
+    }
 
-        for (uint256 i = 1; i < oracles.length; i++) {
-            if (
-                oracleOutcome[oracles[i - 1]][_predictionMarket] != oracleOutcome[oracles[i]][_predictionMarket] &&
-                oracleOutcome[oracles[i]][_predictionMarket] != bytes16(0)
-            ) {
-                return false;
-            }
-        }
+    function _reachedConsensus(address _predictionMarket) internal view returns (bool) {
+        uint256 count = marketStatus[_predictionMarket].oraclesVoted;
+        if (count < marketStatus[_predictionMarket].oraclesCountAtStart) return false;
+        if (count == 0) return false;
+
+        for (uint256 i = 1; i < count; i++)
+            if (oracleOutcome[oracles[i - 1]][_predictionMarket] != oracleOutcome[oracles[i]][_predictionMarket]) return false;
+
         return true;
     }
 
-    function punishOracles(address _predictionMarket, bytes16 _trueOutcome) internal {
+    function punishAndRewardOracles(address _predictionMarket, bytes16 _trueOutcome) internal {
+        uint256 punished;
+        address[] memory correctlyVoted = new address[](oracles.length);
+        uint256 count;
+
         for (uint256 i = 0; i < oracles.length; i++)
             if (oracleOutcome[oracles[i]][_predictionMarket] != marketStatus[_predictionMarket].winningOutcome) {
-                staked[oracles[i]] = 1;
+                punished += staked[oracles[i]];
+                staked[oracles[i]] = 0;
+
+                uint256 index = findOracle(oracles[i]);
+                oracles[index] = oracles[oracles.length - 1];
+                oracles.pop();
+            } else {
+                correctlyVoted[count] = oracles[i];
+                count += 1;
             }
-        //TODO: add reward system for user that started dispute
+
+        //20% of mars tokens stay on Settlement
+        punished = (punished * 8) / 10; //80%
+        marketStatus[_predictionMarket].rewardForDisputeOpener = (punished * 1) / 10; //10%
+        marketStatus[_predictionMarket].correctlyVotedCount = count;
+
+        for (uint256 i = 0; i < count; i++) {
+            marketStatus[_predictionMarket].correctlyVoted[correctlyVoted[i]] = true;
+
+            marsToken.transfer(correctlyVoted[i], punished / count);
+
+            // (x / y) == (x- (x/ y)) / (y-1)
+            // punished -= punished / count;
+            // count -= 1;
+        }
     }
 
     function withdraw() external override {
-        require(oracles.length > 1, "LAST ORACLE CAN'T LEAVE");
-        require(startedDisputes == 0, "ACTIVE DISPUTES IN PROGRESS");
+        require(!isSettlementProcess(block.timestamp), "Active disputes in progress");
+        require(oracles.length > 1, "Last oracle can't leave");
+        uint256 amount = staked[msg.sender];
+        require(amount > 1, "No tokens to withdraw");
 
-        staked[msg.sender] = 1; //security reason
-        require(IERC20(marsToken).transferFrom(address(this), msg.sender, staked[msg.sender]), "FAILED TO TRANSFER AMOUNT");
+        staked[msg.sender] = 1;
+
+        require(marsToken.transfer(msg.sender, amount), "Failed to transfer amount");
+
+        uint256 index = findOracle(msg.sender);
+        oracles[index] = oracles[oracles.length - 1];
+        oracles.pop();
     }
 
     function setWinningOutcomeByGovernance(address _predictionMarket, bytes16 _outcome) external override onlyOwner {
@@ -176,48 +223,70 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
 
         emit OutcomeDefinedEvent(_predictionMarket, _outcome);
 
-        punishOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);
+        punishAndRewardOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);
 
         if (marketStatus[_predictionMarket].startedDispute == true) {
-            startedDisputes -= 1;
             marketStatus[_predictionMarket].startedDispute = false;
         }
+
+        rewardDisputeOpener(_predictionMarket);
+        list.deleteByAddress(_predictionMarket);
     }
 
-    function finalizeOutcome(address _predictionMarket) public {
-        //switch to internal?
-        if (marketStatus[_predictionMarket].finalized == true) {
-            return;
-        }
+    function finalizeOutcome(address _predictionMarket) internal {
+        if (marketStatus[_predictionMarket].finalized == true) return;
+
+        uint256 settlementPeriod = parameters.getOracleSettlementPeriod();
+        uint256 disputePeriod = parameters.getDisputePeriod();
 
         if (
-            marketStatus[_predictionMarket].votingEnd + votingPeriod + timeToOpenDispute < block.timestamp &&
+            marketStatus[_predictionMarket].dueDate + settlementPeriod + disputePeriod < block.timestamp &&
             marketStatus[_predictionMarket].startedDispute == false &&
-            marketStatus[_predictionMarket].finalized == false &&
-            reachedConsensus(_predictionMarket)
+            _reachedConsensus(_predictionMarket)
         ) {
-            marketStatus[_predictionMarket].winningOutcome = oracleOutcome[oracles[0]][_predictionMarket];
             marketStatus[_predictionMarket].finalized = true;
-            marketStatus[_predictionMarket].startedDispute = false;
+            marketStatus[_predictionMarket].winningOutcome = oracleOutcome[oracles[0]][_predictionMarket];
 
             emit OutcomeDefinedEvent(_predictionMarket, oracleOutcome[oracles[0]][_predictionMarket]);
 
-            punishOracles(_predictionMarket, marketStatus[_predictionMarket].winningOutcome);
-            // if (marketStatus[_predictionMarket].startedDispute == true) { //not sure if needed
-            //     startedDisputes -= 1;
-            //     marketStatus[_predictionMarket].startedDispute = false;
-            // }
+            marketStatus[_predictionMarket].correctlyVotedCount = oracles.length;
+
+            for (uint256 i = 0; i < oracles.length; i++) {
+                marketStatus[_predictionMarket].correctlyVoted[oracles[i]] = true;
+            }
+
+            list.deleteByAddress(_predictionMarket);
         }
+    }
+
+    function rewardDisputeOpener(address _predictionMarket) private {
+        MarketStatus storage ms = marketStatus[_predictionMarket];
+
+        address disputeOpenner = ms.disputeOpenner;
+        if (disputeOpenner != address(0)) marsToken.transfer(disputeOpenner, ms.disputeStake + ms.rewardForDisputeOpener);
     }
 
     function getWinningOutcome(address _predictionMarket) external override returns (bytes16) {
         finalizeOutcome(_predictionMarket);
-
-        require(marketStatus[_predictionMarket].finalized == true, "PREDICTION IS NOT YET CONCLUDED");
+        require(marketStatus[_predictionMarket].finalized == true, "Prediction is not yet concluded");
         return marketStatus[_predictionMarket].winningOutcome;
+    }
+
+    function oracleCorrectlyVoted(address _predictionMarket, address _oracle) external override returns (bool) {
+        require(marketStatus[_predictionMarket].finalized == true, "To early to collect");
+        require(msg.sender == _predictionMarket && marketStatus[_predictionMarket].dueDate != 0, "Only markets can call this method");
+        require(marketStatus[_predictionMarket].hasCollected[_oracle] == false, "Oracle has already colected");
+
+        marketStatus[_predictionMarket].hasCollected[_oracle] = true;
+        marketStatus[_predictionMarket].collected += 1;
+        return marketStatus[_predictionMarket].correctlyVoted[_oracle];
     }
 
     function getOracles() external view override returns (address[] memory) {
         return oracles;
+    }
+
+    function getCorrectlyVotedCount(address _market) external view override returns (uint256) {
+        return marketStatus[_market].correctlyVotedCount;
     }
 }
