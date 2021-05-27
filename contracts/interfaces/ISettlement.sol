@@ -20,7 +20,6 @@ interface ISettlement {
         uint256 correctlyVotedCount;
         mapping(address => bool) hasCollected;
         uint256 collected;
-
         uint256 oraclesCountAtStart;
     }
 

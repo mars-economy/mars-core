@@ -40,7 +40,7 @@ export async function populateMarkets(){
         parseInt(markets[i][5]),
         outcomes[i],
         parseInt(markets[i][6]),
-        Math.floor(0.04 * (parseInt(markets[i][4]) - Date.now()/1000) / 2592000 + 1) * parseInt(markets[i][6])
+        parseInt(markets[i][7])
         )
     }
     console.log("MARKETS DONE")
@@ -116,26 +116,25 @@ async function createMarket(
       .registerMarket(marketAddress, milestoneUuid, position, name, description, token, dueDate, predictionTimeEnd, outcomes)
   ).wait()
 
-  console.log("register.register done")
-
   await (
     await settlement
       .connect(me)
       .registerMarket(marketAddress, dueDate)
   ).wait()
 
-  console.log("settlement registered")
-
   const MarsPredictionMarket = await ethers.getContractFactory("MarsPredictionMarket")
   const market = await MarsPredictionMarket.attach(marketAddress)
-
-  console.log("marsMarket attached")
 
   await (
     await market
       .connect(me)
       .setSettlement(ADDR["settlement"])
   ).wait()
+ 
+  await (
+    await market
+      .connect(me)
+      .setParameters(ADDR["parameters"])
+  ).wait()
   
-  console.log("settlement set")
 }

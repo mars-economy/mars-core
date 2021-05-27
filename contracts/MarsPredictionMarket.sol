@@ -43,19 +43,18 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         uint256 _startSharePrice,
         uint256 _endSharePrice
     ) external initializer {
-        __Ownable_init();
-        transferOwnership(owner);
-
         predictionTimeStart = block.timestamp;
         predictionTimeEnd = _predictionTimeEnd;
 
         require(predictionTimeEnd > predictionTimeStart, "Endtime has to be more then start time");
 
+        __Ownable_init();
+        transferOwnership(owner);
+
         for (uint256 i = 0; i < outcomes.length; i++) {
             _addOutcome(outcomes[i].uuid, outcomes[i].position, outcomes[i].name);
         }
 
-        // settlement = ISettlement(_settlement);
         token = IERC20(_token);
 
         startSharePrice = _startSharePrice;
@@ -72,8 +71,8 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
 
     function _getSharePrice(uint256 _currentTime) internal view returns (uint256) {
         if (_currentTime > predictionTimeEnd || _currentTime < predictionTimeStart) return 0;
-        return (((endSharePrice - startSharePrice) / (predictionTimeEnd - predictionTimeStart)) *
-            (roundWeek(_currentTime - predictionTimeStart)) +
+        return (((roundWeek(_currentTime - predictionTimeStart)) * (endSharePrice - startSharePrice)) /
+            (predictionTimeEnd - predictionTimeStart) +
             startSharePrice);
     }
 
@@ -104,9 +103,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
             //else app[i].currentReward = 0, but that goes by default
             app[i].rewardReceived = outcomesId == winningOutcome ? claimed[_wallet] : false;
 
-            uint256 _outcomeBalance = MarsERC20OutcomeToken(outcome).totalSupply();
-            app[i].outcomeBalance = _outcomeBalance;
-            _outcomeBalance = _outcomeBalance == 0 ? 1 : _outcomeBalance;
+            app[i].outcomeBalance = totalSupply;
 
             app[i].suspended = _currentTime > predictionTimeEnd ||
                 _currentTime < predictionTimeStart ||
@@ -154,15 +151,15 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
     }
 
     function getReward() external override {
+        require(claimed[msg.sender] == false, "User already claimed");
+
+        claimed[msg.sender] = true;
+
         bytes16 _winningOutcome = winningOutcome;
         if (_winningOutcome == bytes16(0)) {
             _winningOutcome = settlement.getWinningOutcome(address(this));
             winningOutcome = _winningOutcome;
         }
-
-        require(claimed[msg.sender] == false, "User already claimed");
-
-        claimed[msg.sender] = true;
 
         uint256 userOutcomeTokens = MarsERC20OutcomeToken(tokenOutcomeAddress[_winningOutcome]).balanceOf(msg.sender);
         uint256 outcomeBalance = MarsERC20OutcomeToken(tokenOutcomeAddress[_winningOutcome]).totalSupply();

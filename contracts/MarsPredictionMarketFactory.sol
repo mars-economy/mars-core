@@ -13,8 +13,6 @@ import "./interfaces/IAddressResolver.sol";
 import "./MarsPredictionMarket.sol";
 import "./libraries/Market.sol";
 
-import "hardhat/console.sol"; //TODO: REMOVE
-
 contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable, OwnableUpgradeable {
     address public settlement;
 
@@ -33,12 +31,11 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable,
     ) external override onlyOwner returns (address) {
         require(predictionTimeEnd > block.timestamp, "MARS: Invalid prediction market due date");
 
-        MarsPredictionMarket predictionMarket =
-            MarsPredictionMarket(_createMarketContract(token, predictionTimeEnd, outcomes, owner(), startSharePrice, endSharePrice));
+        address predictionMarket = _createMarketContract(token, predictionTimeEnd, outcomes, owner(), startSharePrice, endSharePrice);
 
-        emit PredictionMarketCreatedEvent(address(predictionMarket));
+        emit PredictionMarketCreatedEvent(predictionMarket);
 
-        return address(predictionMarket);
+        return predictionMarket;
     }
 
     function _createMarketContract(

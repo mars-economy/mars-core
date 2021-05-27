@@ -46,9 +46,9 @@ contract Parameters is IParameters, Initializable, OwnableUpgradeable {
         disputePeriod = _disputePeriod;
         votingPeriod = _votingPeriod;
 
-        oracleAcceptanceAmount = oracleAcceptanceAmount;
-        disputeFeeAmount = disputeFeeAmount;
-        proposalSubmitPrice = proposalSubmitPrice;
+        oracleAcceptanceAmount = _oracleAcceptanceAmount;
+        disputeFeeAmount = _disputeFeeAmount;
+        proposalSubmitPrice = _proposalSubmitPrice;
         quorum = _quorum;
     }
 

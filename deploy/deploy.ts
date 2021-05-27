@@ -7,7 +7,7 @@ import fs from "fs"
 
 import {populateMarkets, ADDR} from "./populate"
 
-const myAddr = "0x2ee51F0bCC1ece7B94091e5E250b08e8276256D9";
+let myAddr: any;
 
 async function deployMarsToken(wethAddress: string) {
   const MarsERC20Token = await ethers.getContractFactory("MarsERC20Token")
@@ -65,7 +65,9 @@ async function deployRegister(wethAddress: string) {
 
 
 async function main() {
-  await deployMarsToken("")
+  myAddr = (await hre.ethers.getSigners())[0].address;
+
+  // await deployMarsToken("")
   await deployParameters("")
   await deploySettlement("") //address _marsToken, address _parameters
   await deployFactory("") //address _settlement

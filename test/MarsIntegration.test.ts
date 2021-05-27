@@ -85,7 +85,6 @@ describe("Integration", async () => {
     await settlement.connect(oracle2_).acceptAndStake()
     expect((await settlement.getOracles()).length).to.be.equal(2)
 
-    
     //first way to add outcomes
     let tx = await predictionMarketFactory.connect(owner).createMarket(
       daiToken.address, timeEnd, 
@@ -97,7 +96,7 @@ describe("Integration", async () => {
     daiToken.address, timeEnd, [{uuid: YES, name: "YES", position: 1}], tokens(1), tokens(10)
   ) //testing creation of second market. Used to be a bug
 
-    // getting market address from event
+  // getting market address from event
     let rx = await tx.wait()
     let _newMarket = rx.events![3].args!._market
 
@@ -106,7 +105,7 @@ describe("Integration", async () => {
     predictionMarket = MarsPredictionMarket__factory.connect(_newMarket, owner)
     //second way to add outcomes
     await predictionMarket.connect(owner).addOutcome(NO, 2, "NO")
-    
+
     await predictionMarket.connect(owner).setSettlement(settlement.address)
     await predictionMarket.connect(owner).setParameters(parameters.address)
 
@@ -122,8 +121,8 @@ describe("Integration", async () => {
 
     await checkBalances([users[0], users[1]], [tokens(10000), tokens(10000)])
 
-    // console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
-    // console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))  
+    //console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
+    //console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))  
     
     await predictionMarket.connect(users[0]).predict(YES, tokens(1000))
     await predictionMarket.connect(users[1]).predict(NO, tokens(1000))
@@ -133,12 +132,15 @@ describe("Integration", async () => {
     await wait(ethers, 60 * 60 * 24 * 2)
 
     await settlement.connect(oracle1_).voteWinningOutcome(_newMarket, YES)
-    await settlement.connect(oracle2_).voteWinningOutcome(_newMarket, YES)
 
+    expect(await settlement.reachedConsensus(_newMarket)).to.be.equal(false)
+
+    await settlement.connect(oracle2_).voteWinningOutcome(_newMarket, YES)
+      
     expect(await settlement.reachedConsensus(_newMarket)).to.be.equal(true)
     
-    // console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
-    // console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))
+    //console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
+    //console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))
     
     await wait(ethers, 60 * 60 * 24 * 8)
 
@@ -147,12 +149,11 @@ describe("Integration", async () => {
 
     await checkBalances([users[0], users[1]], [tokens(9000), tokens(9000)])
 
-    // console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
-    // console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))  
+    console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
+    console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))  
     
     expect(await daiToken.balanceOf(parameters.address)).to.be.equal("0")
 
-    // console.log(await yesToken.connect(users[0]).stakedAmount())
     expect(await predictionMarket.connect(users[0]).getReward()).to.be.ok
     expect(await predictionMarket.connect(users[1]).getReward()).to.be.ok
 
@@ -166,7 +167,7 @@ describe("Integration", async () => {
     expect(await daiToken.balanceOf(await users[8].getAddress())).to.be.equal(tokens(2))
 
     await predictionMarket.connect(oracle1_).collectOracleFee()
-    expect(await daiToken.balanceOf(oracle1)).to.be.equal(tokens(2)) //oracleFeeAccumulated = 4 tokens, 4 / 2(oracles) = 2
+    expect(await daiToken.balanceOf(oracle1)).to.be.equal(tokens(2))
   })
 
 

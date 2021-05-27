@@ -25,6 +25,7 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
     Parameters parameters;
 
     mapping(bytes16 => uint256) public slot;
+    mapping(address => uint256) public marketSlot;
 
     function initialize(address _settlement, address _parameters) external initializer {
         __Ownable_init();
@@ -45,9 +46,12 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         category.name = name;
         category.description = description;
 
-        categories.push(category);
-        slot[uuid] = categories.length - 1;
-
+        if (slot[uuid] != 0) {
+            categories[slot[uuid] - 1] = category;
+        } else {
+            categories.push(category);
+            slot[uuid] = categories.length;
+        }
         emit CategoryUpdatedEvent(uuid, position, name, description);
     }
 
@@ -67,9 +71,12 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         milestone.description = description;
         milestone.status = status;
 
-        milestones.push(milestone);
-        slot[uuid] = milestones.length - 1;
-
+        if (slot[uuid] != 0) {
+            milestones[slot[uuid] - 1] = milestone;
+        } else {
+            milestones.push(milestone);
+            slot[uuid] = milestones.length;
+        }
         emit MilestoneUpdatedEvent(uuid, categoryUuid, position, name, description, status);
     }
 
@@ -96,10 +103,15 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         market.token = token;
         market.dueDate = dueDate;
 
-        predictionMarkets.push(market);
-        emit PredictionMarketRegisteredEvent(milestoneUuid, position, name, description, token, dueDate, market.id);
+        if (marketSlot[market.id] != 0) {
+            predictionMarkets[marketSlot[market.id] - 1] = market;
+        } else {
+            predictionMarkets.push(market);
+            marketSlot[market.id] = predictionMarkets.length;
+        }
 
         for (uint256 i = 0; i < outcomes.length; i++) addOutcome(market.id, outcomes[i].uuid, outcomes[i].position, outcomes[i].name);
+        emit PredictionMarketRegisteredEvent(milestoneUuid, position, name, description, token, dueDate, market.id);
 
         return market.id;
     }
@@ -116,9 +128,12 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         outcome.position = position;
         outcome.name = name;
 
-        outcomes.push(outcome);
-        slot[id] = outcomes.length - 1;
-
+        if (slot[id] != 0) {
+            outcomes[slot[id] - 1] = outcome;
+        } else {
+            outcomes.push(outcome);
+            slot[id] = outcomes.length;
+        }
         emit OutcomeChangedEvent(id, prediction, position, name);
     }
 
@@ -159,9 +174,9 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         for (uint256 i = 0; i < outcomes.length; i++) {
             out[i] = outcomes[i];
 
-            out[i].stakedAmount = MarsERC20OutcomeToken(MarsPredictionMarket(outcomes[i].prediction).tokenOutcomeAddress(outcomes[i].id))
+            out[i].stakedAmount = MarsERC20OutcomeToken(MarsPredictionMarket(out[i].prediction).tokenOutcomeAddress(out[i].id))
                 .totalStakedAmount();
-            out[i].winning = MarsPredictionMarket(outcomes[i].prediction).winningOutcome() == outcomes[i].id ? 1 : 0;
+            out[i].winning = MarsPredictionMarket(out[i].prediction).winningOutcome() == out[i].id ? 1 : 0;
         }
 
         return (categories, milestones, pred, out);

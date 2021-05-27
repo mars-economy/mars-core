@@ -10,8 +10,6 @@ import "./MarsPredictionMarket.sol";
 import "./Parameters.sol";
 import "./interfaces/ISettlement.sol";
 
-import "hardhat/console.sol";
-
 contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
     using StructuredLinkedList for StructuredLinkedList.List;
     StructuredLinkedList.List list;
@@ -37,8 +35,7 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
     function isSettlementProcess(uint256 _currentTime) internal view returns (bool) {
         uint256 _dueDate = list.getFirstDate();
 
-        if (_dueDate == 0 || _dueDate > _currentTime) return false;
-        return true;
+        return _dueDate != 0 && _dueDate <= _currentTime;
     }
 
     function registerMarket(address _predictionMarket, uint256 _dueDate) external override onlyOwner {
@@ -113,7 +110,7 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
 
         marketStatus[_predictionMarket].oraclesVoted = marketStatus[_predictionMarket].oraclesVoted + 1;
         marketStatus[_predictionMarket].oraclesCountAtStart = oracles.length; //find a better place for this
-        
+
         oracleOutcome[msg.sender][_predictionMarket] = _outcome;
         emit OracleVotedEvent(msg.sender, _predictionMarket, _outcome);
     }
@@ -265,7 +262,8 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
     function rewardDisputeOpener(address _predictionMarket) private {
         MarketStatus storage ms = marketStatus[_predictionMarket];
 
-        if (ms.disputeOpenner != address(0)) marsToken.transfer(ms.disputeOpenner, ms.disputeStake + ms.rewardForDisputeOpener);
+        address disputeOpenner = ms.disputeOpenner;
+        if (disputeOpenner != address(0)) marsToken.transfer(disputeOpenner, ms.disputeStake + ms.rewardForDisputeOpener);
     }
 
     function getWinningOutcome(address _predictionMarket) external override returns (bytes16) {

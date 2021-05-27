@@ -74,7 +74,6 @@ describe("Register", async () => {
         expect (data[1].length).to.be.equal(milestones.length)
         expect (data[2].length).to.be.equal(markets.length)
         expect (data[3].length).to.be.equal(outcomes.length*2)
-        console.log(data)
     })
 
     it("Should show slot correctly", async () =>{
@@ -92,9 +91,9 @@ describe("Register", async () => {
                     markets[i][0], parseInt(markets[i][1]), markets[i][2], markets[i][3], 
                     AddressZero, parseInt(markets[i][4]), parseInt(markets[i][4]), outcomes[i])).to.emit(register, "PredictionMarketRegisteredEvent")
     }
-    expect(await register.slot("0xc53ef995914f4b409b22e6128c2bcf17")).to.be.equal(0);
-    expect(await register.slot("0x8bd19e518f4f46dcae86a19480696416")).to.be.equal(3);
-    expect(await register.slot("0x521a30e96c1b40b08b3e98294e70a2f3")).to.be.equal(2);
+    expect(await register.slot("0xc53ef995914f4b409b22e6128c2bcf17")).to.be.equal(1);
+    expect(await register.slot("0x8bd19e518f4f46dcae86a19480696416")).to.be.equal(4);
+    expect(await register.slot("0x521a30e96c1b40b08b3e98294e70a2f3")).to.be.equal(3);
     })
 
     it("Should upgrade, not lose data, and new funcs should also work", async() =>{
@@ -111,5 +110,42 @@ describe("Register", async () => {
 
         await upgraded.setValue(1232)
         expect (await upgraded.getValue()).to.be.equal(1232)
+    })
+
+    it("Should update old data", async() => {
+        await expect(register.updateCategory(categories[0][0], categories[0][1], categories[0][2], categories[0][3])).to.emit(register, "CategoryUpdatedEvent")
+        await expect(register.updateMilestone(milestones[0][0], milestones[0][1], milestones[0][2], milestones[0][3], milestones[0][4], 0)).to.emit(register, "MilestoneUpdatedEvent")
+
+        let tx = await marsFactory.connect(owner).createMarket(AddressZero, parseInt(markets[0][4]), outcomes[0], tokens(1), tokens(10))
+        let rx = await tx.wait()
+        let addr = await rx.events![4].args!._market
+        await expect(register.registerMarket(                
+                    addr,
+                    markets[0][0], parseInt(markets[0][1]), markets[0][2], markets[0][3], 
+                    AddressZero, parseInt(markets[0][4]), parseInt(markets[0][4]), outcomes[0])).to.emit(register, "PredictionMarketRegisteredEvent")
+        
+        let data = await register.getPredictionData(await now(ethers.provider))
+        expect (data[0].length).to.be.equal(1)
+        expect (data[1].length).to.be.equal(1)
+        expect (data[2].length).to.be.equal(1)
+        expect (data[3].length).to.be.equal(2)
+
+
+        await expect(register.updateCategory(categories[0][0], "123", categories[0][2], categories[0][3])).to.emit(register, "CategoryUpdatedEvent")
+        await expect(register.updateMilestone(milestones[0][0], milestones[0][1], "123", milestones[0][3], milestones[0][4], 0)).to.emit(register, "MilestoneUpdatedEvent")
+        await expect(register.registerMarket(                
+            addr,
+            markets[0][0], parseInt("123"), markets[0][2], markets[0][3], 
+            AddressZero, parseInt(markets[0][4]), parseInt(markets[0][4]), outcomes[0])).to.emit(register, "PredictionMarketRegisteredEvent")
+        
+        data = await register.getPredictionData(await now(ethers.provider))
+        expect (data[0].length).to.be.equal(1)
+        expect (data[1].length).to.be.equal(1)
+        expect (data[2].length).to.be.equal(1)
+        expect (data[3].length).to.be.equal(2)
+
+        expect (data[0][1]).to.be.equal(123)
+        expect (data[1][2]).to.be.equal(123)
+        expect (data[2][2]).to.be.equal(123)
     })
 })
