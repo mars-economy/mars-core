@@ -71,7 +71,7 @@ export const milestones = Array(
       "0x9823b01faeed4b139ea387920c16551e",
       "0xb00b5428da0349e48763781ed54d7579",
       "1",
-      "Succesful non-orbital test flight",
+      "Successful non-orbital test flight",
       ""
     )
 )
