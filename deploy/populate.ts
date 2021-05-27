@@ -8,7 +8,7 @@ import {categories, milestones, markets, outcomes} from "./data"
 
 export var ADDR = {
   // governance: "", not needed for now
-  marsToken: "0x79CE12Ed5e31770C095D9092D5dC52CA96B28960",
+  marsToken: "0x77dA5632d829b457cd6d0dE37768eF9d5C879A6C",
   settlement: "0x79CE12Ed5e31770C095D9092D5dC52CA96B28960",
   predictionMarketFactory: "0xd01d78252Bf63d9b8AbF084d659b6857a37674C8",
   register: "0x3f0Ae69BC1622149aFbA380711F1F89eE5674033",
@@ -35,7 +35,7 @@ export async function populateMarkets(){
         parseInt(markets[i][1]),
         markets[i][2],
         markets[i][3],
-        "0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee",
+        "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
         parseInt(markets[i][4]),
         parseInt(markets[i][5]),
         outcomes[i],
