@@ -5,9 +5,9 @@ import hre from "hardhat"
 
 import fs from "fs"
 
-import {populateMarkets, ADDR} from "./populate"
+import { populateMarkets, ADDR } from "./populate"
 
-let myAddr: any;
+let myAddr: any
 
 async function deployMarsToken(wethAddress: string) {
   const MarsERC20Token = await ethers.getContractFactory("MarsERC20Token")
@@ -21,9 +21,11 @@ async function deployMarsToken(wethAddress: string) {
 
 async function deployParameters(wethAddress: string) {
   const Parameters = await ethers.getContractFactory("Parameters")
-  const parameters = await hre.upgrades.deployProxy(Parameters, [
-    myAddr, 10, 20, 10000, 60*60*24, 60*60*24*7, 60*60*24*7, tokens(100000), tokens(20000), 0, 0
-  ], {initializer: "initialize"})
+  const parameters = await hre.upgrades.deployProxy(
+    Parameters,
+    [myAddr, 10, 20, 10000, 60 * 60 * 24, 60 * 60 * 24 * 7, 60 * 60 * 24 * 7, tokens(100000), tokens(20000), 0, 0],
+    { initializer: "initialize" }
+  )
   await parameters.deployed()
 
   ADDR["parameters"] = parameters.address
@@ -33,7 +35,7 @@ async function deployParameters(wethAddress: string) {
 
 async function deploySettlement(wethAddress: string) {
   const Settlement = await ethers.getContractFactory("Settlement")
-  const settlement = await hre.upgrades.deployProxy(Settlement, [ADDR["marsToken"], ADDR["parameters"]], {initializer: "initialize"})
+  const settlement = await hre.upgrades.deployProxy(Settlement, [ADDR["marsToken"], ADDR["parameters"]], { initializer: "initialize" })
   await settlement.deployed()
 
   ADDR["settlement"] = settlement.address
@@ -43,7 +45,7 @@ async function deploySettlement(wethAddress: string) {
 
 async function deployFactory(wethAddress: string) {
   const MarsPredictionMarketFactory = await ethers.getContractFactory("MarsPredictionMarketFactory")
-  const factory = await hre.upgrades.deployProxy(MarsPredictionMarketFactory, [ADDR["settlement"]], {initializer: "initialize"})
+  const factory = await hre.upgrades.deployProxy(MarsPredictionMarketFactory, [ADDR["settlement"]], { initializer: "initialize" })
   await factory.deployed()
 
   ADDR["predictionMarketFactory"] = factory.address
@@ -54,7 +56,7 @@ async function deployFactory(wethAddress: string) {
 
 async function deployRegister(wethAddress: string) {
   const Register = await ethers.getContractFactory("Register")
-  const register = await hre.upgrades.deployProxy(Register, [ADDR["settlement"], ADDR["parameters"]], {initializer: "initialize"})
+  const register = await hre.upgrades.deployProxy(Register, [ADDR["settlement"], ADDR["parameters"]], { initializer: "initialize" })
   await register.deployed()
 
   ADDR["register"] = register.address
@@ -62,10 +64,8 @@ async function deployRegister(wethAddress: string) {
   return register.address
 }
 
-
-
 async function main() {
-  myAddr = (await hre.ethers.getSigners())[0].address;
+  myAddr = (await hre.ethers.getSigners())[0].address
 
   // await deployMarsToken("")
   await deployParameters("")

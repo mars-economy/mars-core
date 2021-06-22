@@ -2,15 +2,10 @@ import { ethers, upgrades } from "hardhat"
 import { expect } from "chai"
 import { Contract, Signer } from "ethers"
 import { bytes32, timeout, wait, now, timeoutAppended } from "./utils/utils"
-import {
-  TestERC20,
-  MarsPredictionMarket,
-  MarsPredictionMarket__factory,
-  MarsPredictionMarketFactory,
-} from "../typechain"
+import { TestERC20, MarsPredictionMarket, MarsPredictionMarket__factory, MarsPredictionMarketFactory } from "../typechain"
 import { setgroups } from "node:process"
 
-import {tokens} from "./utils/utils"
+import { tokens } from "./utils/utils"
 
 describe("Prediction Market", async () => {
   let owner: Signer
@@ -25,7 +20,7 @@ describe("Prediction Market", async () => {
   const MILESTONE = ethers.utils.arrayify("0x13a12ea1f1cb4b6e96a3fbdfcf8c9814")
 
   beforeEach(async () => {
-    [owner, ...users] = await ethers.getSigners()
+    ;[owner, ...users] = await ethers.getSigners()
     timeEnd = await timeoutAppended(ethers.provider, 60 * 60 * 24 * 2)
 
     token = (await (await ethers.getContractFactory("TestERC20")).deploy(tokens(1_000_000), "Test Token", 18, "TTK")) as TestERC20
@@ -34,19 +29,18 @@ describe("Prediction Market", async () => {
     }
 
     predictionMarketFactory = (await (await ethers.getContractFactory("MarsPredictionMarketFactory"))
-    .connect(owner)
-    .deploy()) as MarsPredictionMarketFactory
-  
+      .connect(owner)
+      .deploy()) as MarsPredictionMarketFactory
+
     predictionMarketFactory.connect(owner).initialize(await owner.getAddress())
 
-    let tx = await predictionMarketFactory.connect(owner).createMarket(
-      token.address, timeEnd, 
-      [{uuid: YES, name: "YES", position: 1}], tokens(1), tokens(10)
-    )
+    let tx = await predictionMarketFactory
+      .connect(owner)
+      .createMarket(token.address, timeEnd, [{ uuid: YES, name: "YES", position: 1 }], tokens(1), tokens(10))
 
     let rx = await tx.wait()
     let _newMarket = rx.events![3].args!.contractAddress
-    
+
     predictionMarket = MarsPredictionMarket__factory.connect(_newMarket, owner)
   })
 
@@ -71,5 +65,4 @@ describe("Prediction Market", async () => {
     await predictionMarket.connect(owner).addOutcome(NO, 2, "NO")
     expect(await predictionMarket.getNumberOfOutcomes()).to.equal(2)
   })
-
 })

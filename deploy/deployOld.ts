@@ -39,8 +39,12 @@ async function deployGovToken(wethAddress: string) {
 async function deployMarsToken(wethAddress: string) {
   const MarsToken = await ethers.getContractFactory("MarsERC20Token")
   // const marsToken = await MarsToken.deploy()
-  
-  const marsToken = await hre.upgrades.deployProxy(MarsToken, [BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18)), "Test marsToken", 18, "DMT"], {initializer: "initialize"})
+
+  const marsToken = await hre.upgrades.deployProxy(
+    MarsToken,
+    [BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18)), "Test marsToken", 18, "DMT"],
+    { initializer: "initialize" }
+  )
 
   await marsToken.deployed()
   console.log("marsToken:", marsToken.address)
@@ -66,11 +70,9 @@ async function testMars2() {
 }
 
 async function upgradeMarsToken() {
-
   let addr = "0x22cabD17a710fa04383C7EcE5B33014d231630Dd"
   const MarsToken = await ethers.getContractFactory("MarsERC20Token")
   const mars = MarsToken.attach(addr) as MarsERC20Token
-  
 
   const marsToken = await hre.upgrades.upgradeProxy(addr, MarsToken)
 
@@ -224,7 +226,13 @@ async function populateMarkets() {
   )
 
   const milestones = Array(
-    Array("0x0f7f86d810024f96ad265b067ec6c348", "0x5ffabec44f7a4cd58bf8fae36fe99003", "1", "Crew for first Human Exploration Announced", ""),
+    Array(
+      "0x0f7f86d810024f96ad265b067ec6c348",
+      "0x5ffabec44f7a4cd58bf8fae36fe99003",
+      "1",
+      "Crew for first Human Exploration Announced",
+      ""
+    ),
     Array("0x13a12ea1f1cb4b6e96a3fbdfcf8c9814", "0xb00b5428da0349e48763781ed54d7579", "2", "First Orbital Flight of Starship", ""),
     Array("0x521a30e96c1b40b08b3e98294e70a2f3", "0x64b11d8713b44ac2a32a55523c5a066d", "2", "First Human on Mars", ""),
     Array("0xb938ddb63e9c495c824913ed85b48471", "0x8bd19e518f4f46dcae86a19480696416", "4", "Martian Colonization reaches 10000 humans", ""),
@@ -265,13 +273,7 @@ async function populateMarkets() {
       ""
     ),
     Array("0x95c6d5feed2f4e79a2d0aff3eba2a0e5", "0x64b11d8713b44ac2a32a55523c5a066d", "3", "Perseverance finds trace of life", ""),
-    Array(
-      "0x9823b01faeed4b139ea387920c16551e",
-      "0xb00b5428da0349e48763781ed54d7579",
-      "1",
-      "Succesful test flight for SN16",
-      ""
-    )
+    Array("0x9823b01faeed4b139ea387920c16551e", "0xb00b5428da0349e48763781ed54d7579", "1", "Succesful test flight for SN16", "")
   )
 
   const markets = Array(
@@ -297,13 +299,49 @@ async function populateMarkets() {
       "",
       "2556143999"
     ),
-	Array("0xc9dceba8d2ef45a2a0c5ca5465d4a129", "1", "An unmanned spacecraft will deliver Mars regolith samples to Earth by 2026", "", "1798761599"),
-    Array("0xa69b77f3bda54f38bac865785d81ea4e", "1", "A spacecraft will deliver the first elements of a habitat for crewed exploration by 2028", "", "1861919999"),
+    Array(
+      "0xc9dceba8d2ef45a2a0c5ca5465d4a129",
+      "1",
+      "An unmanned spacecraft will deliver Mars regolith samples to Earth by 2026",
+      "",
+      "1798761599"
+    ),
+    Array(
+      "0xa69b77f3bda54f38bac865785d81ea4e",
+      "1",
+      "A spacecraft will deliver the first elements of a habitat for crewed exploration by 2028",
+      "",
+      "1861919999"
+    ),
     Array("0x132d38ff1bbf43d2a21383cc639f27fc", "1", "A Starship will return to Earth from a Mars trip by 2030", "", "1924991999"),
-    Array("0xc7c761629cfd40c0836604b7b547cbb9", "1", "The first rocket or other spacecraft with parts produced on Mars will be launched by 2040", "", "2240611199"),
-    Array("0xc54d2a758cbd4e9ba66ca13930ef1d97", "1", "The first permanent habitat constructed on the Mars surface will begin hosting astronauts by 2035", "", "2082758399"),
-    Array("0x7080980bc410420697265caf98eb149a", "1", "A utilization of Space Resources found on Mars will take place to service a permanent crewed habitat by 2040", "", "2240611199"),
-    Array("0x95c6d5feed2f4e79a2d0aff3eba2a0e5", "1", "The Mars Rover Perseverance will find traces of organic life on Mars in this decade", "", "1893455999"),
+    Array(
+      "0xc7c761629cfd40c0836604b7b547cbb9",
+      "1",
+      "The first rocket or other spacecraft with parts produced on Mars will be launched by 2040",
+      "",
+      "2240611199"
+    ),
+    Array(
+      "0xc54d2a758cbd4e9ba66ca13930ef1d97",
+      "1",
+      "The first permanent habitat constructed on the Mars surface will begin hosting astronauts by 2035",
+      "",
+      "2082758399"
+    ),
+    Array(
+      "0x7080980bc410420697265caf98eb149a",
+      "1",
+      "A utilization of Space Resources found on Mars will take place to service a permanent crewed habitat by 2040",
+      "",
+      "2240611199"
+    ),
+    Array(
+      "0x95c6d5feed2f4e79a2d0aff3eba2a0e5",
+      "1",
+      "The Mars Rover Perseverance will find traces of organic life on Mars in this decade",
+      "",
+      "1893455999"
+    ),
     Array("0x9823b01faeed4b139ea387920c16551e", "1", "SN16 Starship prototype flies by July 2021", "", "1627775999")
   )
 
@@ -336,7 +374,7 @@ async function populateMarkets() {
     Array(Array("0x8ded5a1b185040c6a7e745a64b91d8ad", "Yes"), Array("0x6e91d0a8239e4e68bf3a82bb450d6898", "No")),
     Array(Array("0x86ac0df9c34d469fac158ce6d9696ad8", "Yes"), Array("0x5e6d846b3ae246fe8a5c09d4b13f00fc", "No")),
     Array(Array("0x65971f65796749e4be49a707038e7784", "Yes"), Array("0x13390113b9e34e96bd3b6443513e5786", "No")),
-	Array(Array("0x10a6bd7101fd411b84e4d10b34148785", "Yes"), Array("0x662903e3f9cf4b79a2eed3a76b6e2b0e", "No"))
+    Array(Array("0x10a6bd7101fd411b84e4d10b34148785", "Yes"), Array("0x662903e3f9cf4b79a2eed3a76b6e2b0e", "No"))
   )
 
   for (var i = 0; i < categories.length; i++) {
@@ -414,40 +452,38 @@ main()
     process.exit(1)
   })
 
+async function deployMarsToken() {
+  const MarsToken = await ethers.getContractFactory("MarsERC20Token")
 
+  const marsToken = await hre.upgrades.deployProxy(MarsToken, ["Decentralized Mars Token", "$DMT", 1684108800], {
+    initializer: "initialize",
+  })
 
+  await marsToken.deployed()
+  console.log("marsToken:", marsToken.address)
+  return marsToken.address
+}
 
+async function upgradeMarsToken(addr: any) {
+  const MarsToken = await ethers.getContractFactory("MarsERC20Token")
+  const mars = MarsToken.attach(addr) as MarsERC20Token
 
-  async function deployMarsToken() {
-    const MarsToken = await ethers.getContractFactory("MarsERC20Token")
-    
-    const marsToken = await hre.upgrades.deployProxy(MarsToken, ["Decentralized Mars Token", "$DMT", 1684108800], {initializer: "initialize"})
-  
-    await marsToken.deployed()
-    console.log("marsToken:", marsToken.address)
-    return marsToken.address
-  }
-  
-  async function upgradeMarsToken(addr: any) {
-    const MarsToken = await ethers.getContractFactory("MarsERC20Token")
-    const mars = MarsToken.attach(addr) as MarsERC20Token
-  
-    const marsToken = await hre.upgrades.upgradeProxy(addr, MarsToken)
-  
-    await marsToken.deployed()
-    console.log("marsToken:", marsToken.address)
-  }
-  
-  async function testMars(addr: any) {
-    const MarsToken = await ethers.getContractFactory("MarsERC20Token")
-    const mars = MarsToken.attach(addr) as MarsERC20Token
-    console.log("Owner:", await mars.owner())
-    console.log("Symbol:", await mars.symbol())
-  }
-  
-  async function testMars2(addr: any) {
-    const MarsToken = await ethers.getContractFactory("MarsERC20Token")
-    const mars = MarsToken.attach(addr) as MarsERC20Token
-    console.log("Owner:", await mars.owner())
-    console.log("value:", await mars.getValue())
-  }
+  const marsToken = await hre.upgrades.upgradeProxy(addr, MarsToken)
+
+  await marsToken.deployed()
+  console.log("marsToken:", marsToken.address)
+}
+
+async function testMars(addr: any) {
+  const MarsToken = await ethers.getContractFactory("MarsERC20Token")
+  const mars = MarsToken.attach(addr) as MarsERC20Token
+  console.log("Owner:", await mars.owner())
+  console.log("Symbol:", await mars.symbol())
+}
+
+async function testMars2(addr: any) {
+  const MarsToken = await ethers.getContractFactory("MarsERC20Token")
+  const mars = MarsToken.attach(addr) as MarsERC20Token
+  console.log("Owner:", await mars.owner())
+  console.log("value:", await mars.getValue())
+}

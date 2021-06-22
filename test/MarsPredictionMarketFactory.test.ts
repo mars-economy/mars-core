@@ -152,7 +152,6 @@ describe("Prediction Market Factory", async () => {
 
     await expect(tx3).not.to.be.reverted
 
-
     const events = await getPredictionMarketCreatedEvents((await tx3).blockNumber)
 
     expect(events.length).to.be.eq(1)
@@ -202,23 +201,18 @@ describe("Prediction Market Factory", async () => {
     const _newMarket = events1[0].args.contractAddress
     const predictionMarket = MarsPredictionMarket__factory.connect(_newMarket, owner)
 
-
-    const tx4 = predictionMarket.addOutcome(
-      ethers.utils.arrayify("0xc53ef995914f4b409b22e6128c2bcf17"),
-      1,
-      "outcome 1"
-    )
+    const tx4 = predictionMarket.addOutcome(ethers.utils.arrayify("0xc53ef995914f4b409b22e6128c2bcf17"), 1, "outcome 1")
     await expect(tx4).not.to.be.reverted
 
     //Prediction market doesn't emit an event
-  //   const events2 = await getOutcomeChangedEvents((await tx4).blockNumber)
+    //   const events2 = await getOutcomeChangedEvents((await tx4).blockNumber)
 
-  //   console.log(events2)
+    //   console.log(events2)
 
-  //   expect(events2.length).to.be.eq(1)
-  //   expect(events2[0].args.uuid).to.be.eq("0xc53ef995914f4b409b22e6128c2bcf17")
-  //   expect(events2[0].args.position).to.be.eq(1)
-  //   expect(events2[0].args.name).to.be.eq("outcome 1")
-  //   expect(events2[0].args.predictionMarket).to.be.eq(predictionMarket)
+    //   expect(events2.length).to.be.eq(1)
+    //   expect(events2[0].args.uuid).to.be.eq("0xc53ef995914f4b409b22e6128c2bcf17")
+    //   expect(events2[0].args.position).to.be.eq(1)
+    //   expect(events2[0].args.name).to.be.eq("outcome 1")
+    //   expect(events2[0].args.predictionMarket).to.be.eq(predictionMarket)
   })
 })

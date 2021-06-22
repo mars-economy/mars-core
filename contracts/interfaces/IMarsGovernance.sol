@@ -1,39 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../libraries/ProposalTypes.sol";
+import "../libraries/Proposals.sol";
 
 interface IMarsGovernance {
-    function changeOutcome(address _predictionMarket, bytes16[] memory _outcomes) external;
+    function getOutcomes(uint256 _index) external view returns (Proposals.ProposalInfo memory, Proposals.ChangeOutcomeProposal memory);
 
-    function addOracle(address _newOracle) external;
-
-    function removeOracle(address _oracle) external;
-
-    function createMarket(
-        address _proposalUuid,
-        bytes16 _milestoneUuid,
-        uint8 _position,
-        string memory _name,
-        string memory _description,
-        bytes16[] memory _outcomes,
-        address _purchaseToken,
-        uint256 _votingEnd
+    function changeOutcome(
+        address _predictionMarket,
+        bytes16[] calldata _outcomes,
+        bool _consensusReached
     ) external;
 
-    function voteForOutcome(address _proposal, uint256 _index) external;
+    function voteForOutcome(uint256 _proposal, uint256 _index) external;
 
-    function vote(address _proposal, ProposalTypes.Vote _vote) external;
+    function finishVote(uint256 _proposal) external;
 
-    function finishVote(address _proposal) external;
+    function iHaveVoted() external view returns (uint256[] memory);
 
-    function getProposalState(address _proposal) external view returns (ProposalTypes.ProposalState memory);
-
-    function getChangeOutcomeState(address _proposal) external view returns (ProposalTypes.ChangeOutcomeProposal memory);
-
-    function getProposalResult(address _proposal) external view returns (ProposalTypes.ProposalStatus);
-
-    function setFactory(address _marsFactory) external;
-
-    function setSettlement(address _marsSettlement) external;
+    function haveIVoted(uint256 i) external view returns (bool);
 }

@@ -1,297 +1,281 @@
-// //-------------------------------------
-// // SPDX-License-Identifier: MIT
-// pragma solidity >=0.8.0 <0.9.0;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.8.0 <0.9.0;
 
-// import "./interfaces/IPredictionMarketFactory.sol";
-// import "./interfaces/IPredictionMarket.sol";
-// import "./interfaces/IMarsGovernance.sol";
-// import "./Settlement.sol";
+import "./interfaces/IPredictionMarketFactory.sol";
+import "./interfaces/IPredictionMarket.sol";
+import "./interfaces/IMarsGovernance.sol";
+import "./interfaces/IParameters.sol";
+import "./interfaces/IRegister.sol";
+import "./Settlement.sol";
 
-// import "./libraries/ProposalTypes.sol";
-// import "./libraries/ProposalLogic.sol";
+import "./libraries/Proposals.sol";
+import "./libraries/Market.sol";
 
-// import "./dependencies/tokens/IERC20.sol";
+import "hardhat/console.sol"; //TODO: REMOVE
 
-// import "hardhat/console.sol"; //TODO: REMOVE
+contract MarsGovernance is IMarsGovernance {
+    event Test(uint256 result);
 
-// contract MarsGovernance is IMarsGovernance {
-//     using ProposalLogic for Proposal;
-//     event ProposalVoted(address user, ProposalTypes.Vote _vote, uint256 influence);
+    using Proposals for Proposals.Proposal;
+    Proposals.Proposal proposals;
 
-//     struct Proposal {
-//         ProposalTypes.ProposalType proposalType;
-//         ProposalTypes.ProposalState state;
-//         mapping(address => ProposalTypes.Vote) voted;
-//         ProposalTypes.ProposalStatus result;
-//     }
+    IPredictionMarketFactory marsFactory;
+    IParameters parameters;
+    Settlement settlement;
+    IRegister register;
+    IERC20 govToken;
 
-//     IPredictionMarketFactory marsFactory;
-//     IERC20 govToken;
-//     Settlement settlement;
+    // mapping(address => uint) userDeposited;
+    // mapping(address => address) delegateesDelegator;
+    //         //user1 => me
+    //         //user2 => me
 
-//     mapping(address => Proposal) internal proposal;
-//     mapping(address => ProposalTypes.CreateMarketProposal) internal createMarketProposal;
-//     mapping(address => ProposalTypes.AddOracleProposal) internal addOracleProposal;
-//     mapping(address => ProposalTypes.ChangeOutcomeProposal) internal changeOutcomeProposal;
-//     mapping(address => ProposalTypes.RemoveOracleProposal) internal removeOracleProposal;
+    // voted[x][me]
+    // voted[x][delegateesDelegator]
 
-//     uint256 votingPeriod = 48 hours;
-//     uint256 quorum = 20; //percentage
-//     uint256 threshold = 50;
+    uint256 threshold = 50;
+    //user     //proposals
+    mapping(address => uint256[]) votedList; // [1,2,3,4]
+    //proposal //voted
+    mapping(uint256 => mapping(address => bool)) voted; //1 -> true, 2 -> true, 5 -> false
 
-//     constructor(address _govToken) {
-//         govToken = IERC20(_govToken);
-//     }
+    constructor(address _govToken, address _parameters) {
+        govToken = IERC20(_govToken);
+        parameters = IParameters(_parameters);
+    }
 
-//     function changeOutcome(address _predictionMarket, bytes16[] memory _outcomes) external override {
-//         require(msg.sender == address(settlement), "ONLY SETTLEMENT CAN START THIS PROPOSAL");
-//         require(createMarketProposal[_predictionMarket].votingEnd < block.timestamp, "VOTING PERIOD HASN'T FINISHED");
-//         proposal[_predictionMarket].state.totalInfluence = 0; //renewing influence?
+    // function getOracle(address _newOracle) external view returns (Proposals.ProposalInfo memory, Proposals.AddOracleProposal memory) {
+    //     Proposals.ProposalInfo memory info = proposals.info[_newOracle];
+    //     Proposals.AddOracleProposal memory oracle = proposals.addOracleProposal[_newOracle];
 
-//         Proposal storage prop = proposal[_predictionMarket];
-//         prop.state.started = block.timestamp;
+    //     return (info, oracle);
+    // }
 
-//         //prop.result = ProposalTypes.ProposalState.IN_PROGRESS; //not sure if needed
-//         prop.proposalType = ProposalTypes.ProposalType.CHANGE_OUTCOME;
+    // function getMarket(address _proposalUuid) external view returns (Proposals.ProposalInfo memory, Proposals.CreateMarketProposal memory) {
+    //     Proposals.ProposalInfo memory info = proposals.info[_proposalUuid];
+    //     Proposals.CreateMarketProposal memory market = proposals.createMarketProposal[_proposalUuid];
 
-//         changeOutcomeProposal[_predictionMarket].outcomes = _outcomes;
-//         changeOutcomeProposal[_predictionMarket].outcomeInfluence = new uint256[](_outcomes.length);
-//     }
+    //     return (info, market);
+    // }
 
-//     function addOracle(address _newOracle) external override {
-//         Proposal storage prop = proposal[_newOracle];
+    // function addOracle(address _newOracle) external {
+    //     proposals.addOracle(_newOracle);
+    // }
 
-//         require(prop.state.started == 0 || prop.proposalType == ProposalTypes.ProposalType.REMOVE_ORACLE, "ORACLE ALREADY ADDED");
+    // function removeOracle(address _oracle) external {
+    //     proposals.removeOracle(_oracle);
+    // }
 
-//         prop.state.started = block.timestamp;
+    // function createMarket(
+    //     address _proposalUuid,
+    //     bytes16 _milestoneUuid,
+    //     uint8 _position,
+    //     string calldata _name,
+    //     string calldata _description,
+    //     Market.Outcome[] calldata _outcomes,
+    //     address _purchaseToken,
+    //     uint256 _votingEnd
+    // ) external {
+    //     proposals.createMarket(_proposalUuid, _outcomes, _purchaseToken, _votingEnd);
+    // }
 
-//         prop.result = ProposalTypes.ProposalStatus.IN_PROGRESS;
+    function getOutcomes(uint256 _index)
+        external
+        view
+        override
+        returns (Proposals.ProposalInfo memory, Proposals.ChangeOutcomeProposal memory)
+    {
+        Proposals.ProposalInfo memory info = proposals.info[_index];
+        Proposals.ChangeOutcomeProposal memory outcomes = proposals.changeOutcomeProposal[_index];
 
-//         prop.proposalType = ProposalTypes.ProposalType.ADD_ORACLE;
+        return (info, outcomes);
+    }
 
-//         addOracleProposal[_newOracle].newOracle = _newOracle;
-//     }
+    function changeOutcome(
+        address _predictionMarket,
+        bytes16[] calldata _outcomes,
+        bool _consensusReached
+    ) external override {
+        // require(msg.sender == address(settlement), "ONLY SETTLEMENT CAN START THIS PROPOSAL");
 
-//     function removeOracle(address _oracle) external override {
-//         Proposal storage prop = proposal[_oracle];
+        proposals.changeOutcome(_predictionMarket, _outcomes, _consensusReached);
+    }
 
-//         require(prop.proposalType == ProposalTypes.ProposalType.ADD_ORACLE, "ORACLE ALREADY DELETED OR NOT ADDED");
+    function voteForOutcome(uint256 _proposal, uint256 _index) external override {
+        require(voted[_proposal][msg.sender] == false, "Already voted");
+        voted[_proposal][msg.sender] = true;
 
-//         prop.state.started = block.timestamp;
+        votedList[msg.sender].push(_proposal);
 
-//         prop.result = ProposalTypes.ProposalStatus.IN_PROGRESS;
+        uint256 influence = govToken.balanceOf(msg.sender);
+        require(influence > 0, "No gov tokens in account");
+        uint256 _votingPeriod = parameters.getVotingPeriod();
 
-//         prop.proposalType = ProposalTypes.ProposalType.REMOVE_ORACLE;
-//         prop.state.approvalsInfluence = 0;
-//         prop.state.againstInfluence = 0;
-//         prop.state.abstainInfluence = 0;
-//         prop.state.totalInfluence = 0;
+        proposals.voteForOutcome(_proposal, _index, influence, _votingPeriod);
+    }
 
-//         addOracleProposal[_oracle].newOracle = _oracle;
-//     }
+    function _createMarket(address _proposal) internal {
+        // address market = marsFactory.createMarket(
+        //     proposals.createMarketProposal[_proposal].token,
+        //     proposals.createMarketProposal[_proposal].votingEnd,
+        //     proposals.createMarketProposal[_proposal].outcomes,
+        //     proposals.createMarketProposal[_proposal].startSharePrice,
+        //     proposals.createMarketProposal[_proposal].endSharePrice
+        // );
+        // settlement.registerMarket(
+        //     market,
+        //     proposals.createMarketProposal[_proposal].outcomes,
+        //     proposals.createMarketProposal[_proposal].votingEnd
+        // );
+        // register.registerMarket(
+        //     market,
+        //     proposals.createMarketProposal[_proposal].milestoneUuid,
+        //     proposals.createMarketProposal[_proposal].position,
+        //     proposals.createMarketProposal[_proposal].name,
+        //     proposals.createMarketProposal[_proposal].description,
+        //     proposals.createMarketProposal[_proposal].token,
+        //     proposals.createMarketProposal[_proposal].dueDate,
+        //     proposals.createMarketProposal[_proposal].votingEnd,
+        //     proposals.createMarketProposal[_proposal].outcomes
+        // );
+    }
 
-//     function createMarket(
-//         address _proposalUuid,
-//         bytes16 _milestoneUuid,
-//         uint8 _position,
-//         string memory _name,
-//         string memory _description,
-//         bytes16[] memory _outcomes,
-//         address _purchaseToken,
-//         uint256 _votingEnd
-//     ) external override {
-//         Proposal storage prop = proposal[_proposalUuid];
+    function finishVote(uint256 _proposal) external override {
+        uint256 _votingPeriod = parameters.getVotingPeriod();
+        require(block.timestamp > proposals.info[_proposal].started + _votingPeriod, "VOTING PERIOD HASN'T ENDED");
+        //TODO: check if finished
 
-//         require(prop.state.started == 0, "NAME/ADDRESS ALREADY TAKEN");
+        Proposals.ProposalType tmp = proposals.info[_proposal].proposalType;
 
-//         prop.state.started = block.timestamp;
+        // uint256 _threshold = parameters.getThreshold(); //FIXME: add to parameters
+        uint256 _quorum = parameters.getQuorum();
 
-//         //prop.result = ProposalTypes.ProposalState.IN_PROGRESS;
-//         prop.proposalType = ProposalTypes.ProposalType.CREATE_MARKET;
+        if (tmp == Proposals.ProposalType.CREATE_MARKET) {
+            // if (proposals.createMarketResult(_proposal, _quorum, threshold) == Proposals.ProposalStatus.APPROVED) {
+            //     emit Test(200);
+            //     _createMarket(_proposal);
+            //     return;
+            // }
+        } else if (tmp == Proposals.ProposalType.ADD_ORACLE) {
+            // if (proposals.addOracleResult(_proposal, _quorum, threshold) == Proposals.ProposalStatus.APPROVED) {
+            //     emit Test(201);
+            //     // settlement.addOracle(self.addOracleProposal[_proposal].newOracle);
+            //     return;
+            // }
+        } else if (tmp == Proposals.ProposalType.REMOVE_ORACLE) {
+            // if (proposals.removeOracleResult(_proposal, _quorum, threshold) == Proposals.ProposalStatus.APPROVED) {
+            //     emit Test(202);
+            //     settlement.removeOracle(proposals.removeOracleProposal[_proposal].oracle);
+            //     return;
+            // }
+        } else if (tmp == Proposals.ProposalType.CHANGE_OUTCOME) {
+            (Proposals.ProposalStatus status, uint256 indexMax) = proposals.changeOutcomeResult(_proposal);
+            if (status == Proposals.ProposalStatus.APPROVED) {
+                emit Test(indexMax);
+                // settlement.setWinningOutcome(_proposal, proposals.changeOutcomeProposal[_proposal].outcomes[indexMax]);
+                return;
+            }
+        } else if (tmp == Proposals.ProposalType.CHANGE_CONTRACT) {} else if (tmp == Proposals.ProposalType.CHANGE_VALUE) {}
+        emit Test(100);
+    }
 
-//         createMarketProposal[_proposalUuid].milestoneUuid = _milestoneUuid;
-//         createMarketProposal[_proposalUuid].position = _position;
-//         createMarketProposal[_proposalUuid].name = _name;
-//         createMarketProposal[_proposalUuid].description = _description;
-//         createMarketProposal[_proposalUuid].outcomes = _outcomes;
-//         createMarketProposal[_proposalUuid].token = _purchaseToken;
-//         createMarketProposal[_proposalUuid].votingEnd = _votingEnd;
-//     }
+    // function vote(uint256 _proposal, Proposals.Vote _vote, uint256 _amount) external {
+    //     // require(voted[msg.sender] == false, "Already voted");
+    //     // voted[msg.sender] = true;
 
-//     function voteForOutcome(address _proposal, uint256 _index) external override {
-//         require(proposal[_proposal].state.started != 0, "PROPOSAL HASN'T BEEN CREATED");
-//         require(block.timestamp < proposal[_proposal].state.started + votingPeriod, "VOTING PERIOD HAS FINISHED");
-//         require(_index < changeOutcomeProposal[_proposal].outcomes.length, "INVALID INDEX");
-//         uint256 influence = govToken.balanceOf(msg.sender);
-//         require(influence > 0, "NO GOV TOKENS IN ACCOUNT");
+    //     uint256 _influence = govToken.balanceOf(msg.sender);
+    //     require(_influence > 0 && _influence >= _amount, "NO GOV TOKENS IN ACCOUNT");
 
-//         changeOutcomeProposal[_proposal].outcomeInfluence[_index] = changeOutcomeProposal[_proposal].outcomeInfluence[_index] + influence;
+    //     uint256 _votingPeriod = parameters.getVotingPeriod();
+    //     proposals.vote(_proposal, _vote, _votingPeriod, _influence);
+    // }
 
-//         proposal[_proposal].state.totalInfluence += influence;
-//     }
+    // function getProposalResult(address _proposal) external view returns (Proposals.ProposalStatus) {
+    //     return proposals.info[_proposal].result;
+    // }
 
-//     function vote(address _proposal, ProposalTypes.Vote _vote) external override {
-//         require(proposal[_proposal].state.started != 0, "PROPOSAL HASN'T BEEN CREATED");
-//         require(block.timestamp < proposal[_proposal].state.started + votingPeriod, "VOTING PERIOD HAS FINISHED");
-//         uint256 influence = govToken.balanceOf(msg.sender);
-//         require(influence > 0, "NO GOV TOKENS IN ACCOUNT");
+    // //maybe change to modifier?
+    // function checkIfEnded(address _proposal, uint _currentTime) public view returns (Proposals.ProposalStatus) {
+    //     if (_currentTime > endTime(_proposal)) {
+    //         return proposals.info[_proposal].result;
+    //     } else {
+    //         return Proposals.ProposalStatus.IN_PROGRESS;
+    //     }
+    // }
 
-//         Proposal storage prop = proposal[_proposal];
+    // function endTime(address _proposal) public view returns (uint256) {
+    //     uint256 _votingPeriod = parameters.getVotingPeriod();
 
-//         if (_vote == ProposalTypes.Vote.YES) {
-//             if (prop.proposalType == ProposalTypes.ProposalType.CREATE_MARKET) {
-//                 prop.state.approvalsInfluence += influence;
-//             } else if (prop.proposalType == ProposalTypes.ProposalType.ADD_ORACLE) {
-//                 prop.state.approvalsInfluence += influence;
-//             }
-//         }
+    //     return proposals.info[_proposal].started + _votingPeriod;
+    // }
 
-//         if (_vote == ProposalTypes.Vote.NO) {
-//             if (prop.proposalType == ProposalTypes.ProposalType.CREATE_MARKET) {
-//                 prop.state.againstInfluence += influence;
-//             } else if (prop.proposalType == ProposalTypes.ProposalType.ADD_ORACLE) {
-//                 prop.state.againstInfluence += influence;
-//             }
-//         }
+    // function setFactory(address _marsFactory) external {
+    //     marsFactory = IPredictionMarketFactory(_marsFactory);
+    // }
 
-//         if (_vote == ProposalTypes.Vote.ABSTAIN) {
-//             if (prop.proposalType == ProposalTypes.ProposalType.CREATE_MARKET) {
-//                 prop.state.abstainInfluence += influence;
-//             } else if (prop.proposalType == ProposalTypes.ProposalType.ADD_ORACLE) {
-//                 prop.state.abstainInfluence += influence;
-//             }
-//         }
+    // function setSettlement(address _marsSettlement) external {
+    //     settlement = Settlement(_marsSettlement);
+    // }
 
-//         prop.state.totalInfluence += influence;
-//     }
+    struct OutcomeStatus {
+        bool consensusReached;
+        address market;
+        uint256 endDate;
+        bytes16 decision;
+        uint256 totalSupply;
+        uint256 quorumPercentage;
+        uint256[] voted;
+    }
 
-//     function finishVote(address _proposal) external override {
-//         Proposal storage prop = proposal[_proposal];
+    function getOutcomeStatus(bool historic) external view returns (OutcomeStatus[] memory) {
+        Proposals.ProposalInfo[] memory props;
+        OutcomeStatus[] memory reply;
 
-//         require(block.timestamp > prop.state.started + votingPeriod, "VOTING PERIOD HASN'T ENDED");
+        if (historic == true) {
+            props = new Proposals.ProposalInfo[](proposals.historic.length);
+            reply = new OutcomeStatus[](proposals.historic.length);
 
-//         if (prop.proposalType == ProposalTypes.ProposalType.CREATE_MARKET) {
-//             if (
-//                 (prop.state.totalInfluence != 0) &&
-//                 ((100 * (prop.state.approvalsInfluence + prop.state.againstInfluence + prop.state.abstainInfluence)) /
-//                     prop.state.totalInfluence <
-//                     quorum)
-//             ) {
-//                 prop.result = ProposalTypes.ProposalStatus.DECLINED;
-//             } else if (
-//                 (prop.state.approvalsInfluence + prop.state.againstInfluence) != 0 &&
-//                 ((100 * prop.state.approvalsInfluence) / (prop.state.approvalsInfluence + prop.state.againstInfluence) > threshold)
-//             ) {
-//                 prop.result = ProposalTypes.ProposalStatus.APPROVED;
+            for (uint256 i = 0; i < proposals.historic.length; i++) {
+                props[i] = proposals.info[i];
+            }
+        } else {
+            props = proposals.info;
+            reply = new OutcomeStatus[](proposals.count);
+        }
 
-//                 // ((((((((((((((((()))))))))))))))))
-//                 IPredictionMarket market =
-//                     IPredictionMarket(
-//                         marsFactory.createMarket(
-//                             createMarketProposal[_proposal].milestoneUuid,
-//                             createMarketProposal[_proposal].position,
-//                             createMarketProposal[_proposal].name,
-//                             createMarketProposal[_proposal].description,
-//                             createMarketProposal[_proposal].token,
-//                             createMarketProposal[_proposal].votingEnd
-//                         )
-//                     );
+        uint256 _votingPeriod = parameters.getVotingPeriod();
+        uint256 DMTSupply = govToken.totalSupply();
 
-//                 for (uint256 i = 0; i < createMarketProposal[_proposal].outcomes.length; i++) {
-//                     // TODO: change to real outcome params and invoke via factory
-//                     market.addOutcome(createMarketProposal[_proposal].outcomes[i], 1, "");
-//                 }
+        for (uint256 i = 0; i < props.length; i++) {
+            reply[i].consensusReached = proposals.changeOutcomeProposal[i].consensusReached;
+            reply[i].market = proposals.changeOutcomeProposal[i].market;
+            reply[i].endDate = proposals.info[i].started + _votingPeriod;
+            reply[i].decision = proposals.changeOutcomeProposal[i].winningOutcome;
+            reply[i].totalSupply = proposals.info[i].totalInfluence;
+            if (DMTSupply != 0) reply[i].quorumPercentage = (reply[i].totalSupply * 100) / DMTSupply;
+            reply[i].voted = _percentages(proposals.changeOutcomeProposal[i].outcomeInfluence);
+        }
 
-//                 settlement.registerMarket(
-//                     address(market),
-//                     createMarketProposal[_proposal].outcomes,
-//                     createMarketProposal[_proposal].votingEnd
-//                 );
-//             } else {
-//                 prop.result = ProposalTypes.ProposalStatus.DECLINED;
-//             }
-//         } else if (prop.proposalType == ProposalTypes.ProposalType.ADD_ORACLE) {
-//             if (
-//                 (prop.state.totalInfluence != 0) &&
-//                 ((100 * (prop.state.approvalsInfluence + prop.state.againstInfluence + prop.state.abstainInfluence)) /
-//                     prop.state.totalInfluence <
-//                     quorum)
-//             ) {
-//                 prop.result = ProposalTypes.ProposalStatus.DECLINED;
-//             } else if (
-//                 (prop.state.approvalsInfluence + prop.state.againstInfluence) != 0 &&
-//                 ((100 * prop.state.approvalsInfluence) / (prop.state.approvalsInfluence + prop.state.againstInfluence) > threshold)
-//             ) {
-//                 prop.result = ProposalTypes.ProposalStatus.APPROVED;
+        return reply;
+    }
 
-//                 // ((((((((((((((((()))))))))))))))))
-//                 settlement.addOracle(addOracleProposal[_proposal].newOracle);
-//             } else {
-//                 prop.result = ProposalTypes.ProposalStatus.DECLINED;
-//             }
-//         } else if (prop.proposalType == ProposalTypes.ProposalType.REMOVE_ORACLE) {
-//             if (
-//                 (prop.state.totalInfluence != 0) &&
-//                 ((100 * (prop.state.approvalsInfluence + prop.state.againstInfluence + prop.state.abstainInfluence)) /
-//                     prop.state.totalInfluence <
-//                     quorum)
-//             ) {
-//                 prop.result = ProposalTypes.ProposalStatus.DECLINED;
-//             } else if (
-//                 (prop.state.approvalsInfluence + prop.state.againstInfluence) != 0 &&
-//                 ((100 * prop.state.approvalsInfluence) / (prop.state.approvalsInfluence + prop.state.againstInfluence) > threshold)
-//             ) {
-//                 prop.result = ProposalTypes.ProposalStatus.APPROVED;
+    function _percentages(uint256[] memory arr) internal view returns (uint256[] memory) {
+        uint256 biggestElement;
+        uint256[] memory percentages = new uint256[](arr.length);
 
-//                 // ((((((((((((((((()))))))))))))))))
-//                 settlement.removeOracle(removeOracleProposal[_proposal].oracle);
-//             } else {
-//                 prop.result = ProposalTypes.ProposalStatus.DECLINED;
-//             }
-//         } else if (prop.proposalType == ProposalTypes.ProposalType.CHANGE_OUTCOME) {
-//             uint256 valueMax;
-//             uint256 indexMax;
+        for (uint256 i = 0; i < arr.length; i++) {
+            if (arr[i] > biggestElement) biggestElement = arr[i];
+        }
 
-//             for (uint256 i = 0; i < changeOutcomeProposal[_proposal].outcomes.length; i++)
-//                 if (valueMax < changeOutcomeProposal[_proposal].outcomeInfluence[i]) {
-//                     valueMax = changeOutcomeProposal[_proposal].outcomeInfluence[i];
-//                     indexMax = i;
-//                 }
+        if (biggestElement != 0) for (uint256 i = 0; i < arr.length; i++) {percentages[i] = (arr[i] * 100) / biggestElement;}
+        return percentages;
+    }
 
-//             settlement.setWinningOutcome(_proposal, changeOutcomeProposal[_proposal].outcomes[indexMax]);
-//         }
-//     }
+    function iHaveVoted() external view override returns (uint256[] memory) {
+        return votedList[msg.sender];
+    }
 
-//     function getProposalState(address _proposal) external view override returns (ProposalTypes.ProposalState memory) {
-//         return proposal[_proposal].state;
-//     }
-
-//     function getChangeOutcomeState(address _proposal) external view override returns (ProposalTypes.ChangeOutcomeProposal memory) {
-//         return changeOutcomeProposal[_proposal];
-//     }
-
-//     function getProposalResult(address _proposal) external view override returns (ProposalTypes.ProposalStatus) {
-//         return proposal[_proposal].result;
-//     }
-
-//     //maybe change to modifier?
-//     function checkIfEnded(address _proposal) public view returns (ProposalTypes.ProposalStatus) {
-//         if (block.timestamp > endTime(_proposal)) {
-//             return proposal[_proposal].result;
-//         } else {
-//             return ProposalTypes.ProposalStatus.IN_PROGRESS;
-//         }
-//     }
-
-//     function endTime(address _proposal) public view returns (uint256) {
-//         return proposal[_proposal].state.started + votingPeriod;
-//     }
-
-//     function setFactory(address _marsFactory) external override {
-//         marsFactory = IPredictionMarketFactory(_marsFactory);
-//     }
-
-//     function setSettlement(address _marsSettlement) external override {
-//         settlement = Settlement(_marsSettlement);
-//     }
-// }
+    function haveIVoted(uint256 i) external view override returns (bool) {
+        return voted[i][msg.sender];
+    }
+}

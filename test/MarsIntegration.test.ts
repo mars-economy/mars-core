@@ -10,10 +10,9 @@ import {
   MarsPredictionMarket__factory,
   MarsPredictionMarketFactory,
   Settlement,
-  Parameters
+  Parameters,
 } from "../typechain"
 // import { exit, setgroups } from "node:process"
-
 
 describe("Integration", async () => {
   let owner: Signer
@@ -47,22 +46,30 @@ describe("Integration", async () => {
       await daiToken.transfer(await users[i].getAddress(), initialBalance)
     }
 
-    parameters = (await (await ethers.getContractFactory("Parameters"))
-    .connect(owner)
-    .deploy()) as Parameters
+    parameters = (await (await ethers.getContractFactory("Parameters")).connect(owner).deploy()) as Parameters
 
-    parameters.initialize(await users[8].getAddress(), 10, 20, 10000, 60*60*24, 60*60*24*7, 60*60*24*7, tokens(100000), tokens(20000), 0, 0)
+    parameters.initialize(
+      await users[8].getAddress(),
+      10,
+      20,
+      10000,
+      60 * 60 * 24,
+      60 * 60 * 24 * 7,
+      60 * 60 * 24 * 7,
+      tokens(100000),
+      tokens(20000),
+      0,
+      0
+    )
 
-    settlement = (await (await ethers.getContractFactory("Settlement"))
-      .connect(owner)
-      .deploy()) as Settlement
+    settlement = (await (await ethers.getContractFactory("Settlement")).connect(owner).deploy()) as Settlement
 
     settlement.connect(owner).initialize(marsToken.address, parameters.address)
 
     predictionMarketFactory = (await (await ethers.getContractFactory("MarsPredictionMarketFactory"))
       .connect(owner)
       .deploy()) as MarsPredictionMarketFactory
-    
+
     predictionMarketFactory.connect(owner).initialize(settlement.address)
   })
 
@@ -86,17 +93,16 @@ describe("Integration", async () => {
     expect((await settlement.getOracles()).length).to.be.equal(2)
 
     //first way to add outcomes
-    let tx = await predictionMarketFactory.connect(owner).createMarket(
-      daiToken.address, timeEnd, 
-      [{uuid: YES, name: "YES", position: 1}], tokens(1), tokens(10)
-    )
+    let tx = await predictionMarketFactory
+      .connect(owner)
+      .createMarket(daiToken.address, timeEnd, [{ uuid: YES, name: "YES", position: 1 }], tokens(1), tokens(10))
 
     const MILESTONE2 = ethers.utils.arrayify("0x13a12ea1f1cb4b6e96a3fbdfcf8c9815")
-    let tx2 = await predictionMarketFactory.connect(owner).createMarket(
-    daiToken.address, timeEnd, [{uuid: YES, name: "YES", position: 1}], tokens(1), tokens(10)
-  ) //testing creation of second market. Used to be a bug
+    let tx2 = await predictionMarketFactory
+      .connect(owner)
+      .createMarket(daiToken.address, timeEnd, [{ uuid: YES, name: "YES", position: 1 }], tokens(1), tokens(10)) //testing creation of second market. Used to be a bug
 
-  // getting market address from event
+    // getting market address from event
     let rx = await tx.wait()
     let _newMarket = rx.events![3].args!._market
 
@@ -122,8 +128,8 @@ describe("Integration", async () => {
     await checkBalances([users[0], users[1]], [tokens(10000), tokens(10000)])
 
     //console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
-    //console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))  
-    
+    //console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))
+
     await predictionMarket.connect(users[0]).predict(YES, tokens(1000))
     await predictionMarket.connect(users[1]).predict(NO, tokens(1000))
 
@@ -136,12 +142,12 @@ describe("Integration", async () => {
     expect(await settlement.reachedConsensus(_newMarket)).to.be.equal(false)
 
     await settlement.connect(oracle2_).voteWinningOutcome(_newMarket, YES)
-      
+
     expect(await settlement.reachedConsensus(_newMarket)).to.be.equal(true)
-    
+
     //console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
     //console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))
-    
+
     await wait(ethers, 60 * 60 * 24 * 8)
 
     await yesToken.connect(users[0]).approve(predictionMarket.address, tokens(1000))
@@ -150,8 +156,8 @@ describe("Integration", async () => {
     await checkBalances([users[0], users[1]], [tokens(9000), tokens(9000)])
 
     console.log("user0", await predictionMarket.getUserPredictionState(await users[0].getAddress(), await now(ethers.provider)))
-    console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))  
-    
+    console.log("user1", await predictionMarket.getUserPredictionState(await users[1].getAddress(), await now(ethers.provider)))
+
     expect(await daiToken.balanceOf(parameters.address)).to.be.equal("0")
 
     expect(await predictionMarket.connect(users[0]).getReward()).to.be.ok
@@ -169,7 +175,6 @@ describe("Integration", async () => {
     await predictionMarket.connect(oracle1_).collectOracleFee()
     expect(await daiToken.balanceOf(oracle1)).to.be.equal(tokens(2))
   })
-
 
   const checkBalances = async (users: Signer[], amounts: BigNumberish[]) => {
     for (let i = 0; i < amounts.length; i++) {

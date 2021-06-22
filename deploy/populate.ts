@@ -3,8 +3,7 @@ import { ethers, network } from "hardhat"
 import { BigNumber, Contract } from "ethers"
 import { LogDescription } from "ethers/lib/utils"
 
-import {categories, milestones, markets, outcomes} from "./data"
-
+import { categories, milestones, markets, outcomes } from "./data"
 
 export var ADDR = {
   // governance: "", not needed for now
@@ -12,41 +11,41 @@ export var ADDR = {
   settlement: "0x79CE12Ed5e31770C095D9092D5dC52CA96B28960",
   predictionMarketFactory: "0xd01d78252Bf63d9b8AbF084d659b6857a37674C8",
   register: "0x3f0Ae69BC1622149aFbA380711F1F89eE5674033",
-  parameters: ""
+  parameters: "",
 }
 
-export async function populateMarkets(){
-    for (var i = 0; i < categories.length; i++) {
-      console.log(i, categories.length - 1)
-      await createCategory(categories[i][0], parseInt(categories[i][1]), categories[i][2], categories[i][3])
-    }
-    console.log("CATEGORIES DONE")
+export async function populateMarkets() {
+  for (var i = 0; i < categories.length; i++) {
+    console.log(i, categories.length - 1)
+    await createCategory(categories[i][0], parseInt(categories[i][1]), categories[i][2], categories[i][3])
+  }
+  console.log("CATEGORIES DONE")
 
-    for (var i = 0; i < milestones.length; i++) {
-      console.log(i, milestones.length - 1)
-      await createMilestone(milestones[i][0], milestones[i][1], parseInt(milestones[i][2]), milestones[i][3], milestones[i][4])
-    }
-    console.log("MILESTONES DONE")
+  for (var i = 0; i < milestones.length; i++) {
+    console.log(i, milestones.length - 1)
+    await createMilestone(milestones[i][0], milestones[i][1], parseInt(milestones[i][2]), milestones[i][3], milestones[i][4])
+  }
+  console.log("MILESTONES DONE")
 
   for (var i = 0; i < markets.length; i++) {
-      console.log(i, markets.length - 1)
-      await createMarket(
-        markets[i][0],
-        parseInt(markets[i][1]),
-        markets[i][2],
-        markets[i][3],
-        "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
-        parseInt(markets[i][4]),
-        parseInt(markets[i][5]),
-        outcomes[i],
-        parseInt(markets[i][6]),
-        parseInt(markets[i][7])
-        )
-    }
-    console.log("MARKETS DONE")
+    console.log(i, markets.length - 1)
+    await createMarket(
+      markets[i][0],
+      parseInt(markets[i][1]),
+      markets[i][2],
+      markets[i][3],
+      "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
+      parseInt(markets[i][4]),
+      parseInt(markets[i][5]),
+      outcomes[i],
+      parseInt(markets[i][6]),
+      parseInt(markets[i][7])
+    )
+  }
+  console.log("MARKETS DONE")
 }
 
-async function createCategory(uuid: string,position: number, name: string, description: string) {
+async function createCategory(uuid: string, position: number, name: string, description: string) {
   const Register = await ethers.getContractFactory("Register")
   const register = await Register.attach(ADDR["register"])
 
@@ -99,14 +98,12 @@ async function createMarket(
   const settlement = await Settlement.attach(ADDR["settlement"])
 
   const [me] = await ethers.getSigners()
-  let tx = await predictionMarketFactory
-    .connect(me)
-    .createMarket(token, predictionTimeEnd, outcomes, startSharePrice, endSharePrice)
+  let tx = await predictionMarketFactory.connect(me).createMarket(token, predictionTimeEnd, outcomes, startSharePrice, endSharePrice)
 
   tx = await tx.wait()
 
   const events = await getPredictionMarketCreatedEvents(predictionMarketFactory, tx.blockNumber)
-  
+
   const marketAddress = events[0].args._market
   console.log("Created market " + marketAddress)
 
@@ -116,25 +113,12 @@ async function createMarket(
       .registerMarket(marketAddress, milestoneUuid, position, name, description, token, dueDate, predictionTimeEnd, outcomes)
   ).wait()
 
-  await (
-    await settlement
-      .connect(me)
-      .registerMarket(marketAddress, dueDate)
-  ).wait()
+  await (await settlement.connect(me).registerMarket(marketAddress, dueDate)).wait()
 
   const MarsPredictionMarket = await ethers.getContractFactory("MarsPredictionMarket")
   const market = await MarsPredictionMarket.attach(marketAddress)
 
-  await (
-    await market
-      .connect(me)
-      .setSettlement(ADDR["settlement"])
-  ).wait()
- 
-  await (
-    await market
-      .connect(me)
-      .setParameters(ADDR["parameters"])
-  ).wait()
-  
+  await (await market.connect(me).setSettlement(ADDR["settlement"])).wait()
+
+  await (await market.connect(me).setParameters(ADDR["parameters"])).wait()
 }
