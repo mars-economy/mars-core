@@ -12,6 +12,7 @@ export var ADDR = {
   predictionMarketFactory: "0xd01d78252Bf63d9b8AbF084d659b6857a37674C8",
   register: "0x3f0Ae69BC1622149aFbA380711F1F89eE5674033",
   parameters: "",
+  governance: ""
 }
 
 export async function populateMarkets() {

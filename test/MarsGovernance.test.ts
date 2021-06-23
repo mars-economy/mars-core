@@ -1,4 +1,4 @@
-import { ethers } from "hardhat"
+import { ethers, upgrades } from "hardhat"
 import { expect } from "chai"
 import { BigNumberish, Signer } from "ethers"
 import { AddressZero } from "@ethersproject/constants"
@@ -46,7 +46,8 @@ describe("Governance", async () => {
       await marsToken.transfer(await users[i].getAddress(), initialBalance)
     }
 
-    gov = (await (await ethers.getContractFactory("MarsGovernance")).deploy(marsToken.address, parameters.address)) as MarsGovernance
+    const Contract = await ethers.getContractFactory("MarsGovernance")
+    gov = await upgrades.deployProxy(Contract, [marsToken.address, parameters.address]) as MarsGovernance
   })
 
   // it("Add oracle", async () => {

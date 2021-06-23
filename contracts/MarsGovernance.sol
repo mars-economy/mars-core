@@ -11,9 +11,10 @@ import "./Settlement.sol";
 import "./libraries/Proposals.sol";
 import "./libraries/Market.sol";
 
-import "hardhat/console.sol"; //TODO: REMOVE
+// import "hardhat/console.sol"; //TODO: REMOVE
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract MarsGovernance is IMarsGovernance {
+contract MarsGovernance is IMarsGovernance, Initializable {
     event Test(uint256 result);
 
     using Proposals for Proposals.Proposal;
@@ -33,15 +34,17 @@ contract MarsGovernance is IMarsGovernance {
     // voted[x][me]
     // voted[x][delegateesDelegator]
 
-    uint256 threshold = 50;
+    uint256 threshold;
     //user     //proposals
     mapping(address => uint256[]) votedList; // [1,2,3,4]
     //proposal //voted
     mapping(uint256 => mapping(address => bool)) voted; //1 -> true, 2 -> true, 5 -> false
 
-    constructor(address _govToken, address _parameters) {
+    function initialize(address _govToken, address _parameters) external initializer {
         govToken = IERC20(_govToken);
         parameters = IParameters(_parameters);
+
+        threshold = 50;
     }
 
     // function getOracle(address _newOracle) external view returns (Proposals.ProposalInfo memory, Proposals.AddOracleProposal memory) {
