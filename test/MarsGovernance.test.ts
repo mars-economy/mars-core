@@ -67,17 +67,17 @@ describe("Governance", async () => {
     // console.log(await gov.connect(users[1]).iHaveVoted())
     // console.log(await gov.connect(users[1]).haveIVoted(0))
 
-    // console.log("false", await gov.getOutcomeStatus(false))
-    // console.log("true", await gov.getOutcomeStatus(true))
+    console.log("false", await gov.getOutcomeStatus(false, await users[1].getAddress()))
+    console.log("true", await gov.getOutcomeStatus(true, await users[1].getAddress()))
 
     await gov.changeOutcome(AddressZero, ["0x521a30e96c1b40b08b3e98294e70a2f3", "0x521a30e96c1b40b08b3e98294e70a2f1"], true)
-
-    // console.log("false", await gov.getOutcomeStatus(false))
-    // console.log("true", await gov.getOutcomeStatus(true))
 
     // console.log(await gov.getOutcomes(AddressZero))
 
     await gov.connect(users[1]).voteForOutcome(0, 1)
+    
+    console.log("false", await gov.getOutcomeStatus(false, await users[1].getAddress()))
+    console.log("true", await gov.getOutcomeStatus(true, await users[1].getAddress()))
 
     expect((await gov.getOutcomes(AddressZero))[1].outcomeInfluence[1]).to.be.equal(initialBalance)
     expect((await gov.getOutcomes(AddressZero))[1].outcomeInfluence[0]).to.be.equal(0)
@@ -87,10 +87,11 @@ describe("Governance", async () => {
     let tx = gov.finishVote(AddressZero)
     expect((await (await tx).wait()).events![0].args!.result).to.be.equal(1)
 
-    // console.log("false", await gov.getOutcomeStatus(false))
-    // console.log("true", await gov.getOutcomeStatus(true))
-    // console.log(await gov.connect(users[1]).iHaveVoted())
-    // console.log(await gov.connect(users[1]).haveIVoted(0))
+    console.log("false", await gov.getOutcomeStatus(false, await users[1].getAddress()))
+    console.log("true", await gov.getOutcomeStatus(true, await users[1].getAddress()))
+
+    console.log(await gov.connect(users[1]).iHaveVoted())
+    console.log(await gov.connect(users[1]).haveIVoted(0))
   })
 
   //   it("Remove oracle", async () => {

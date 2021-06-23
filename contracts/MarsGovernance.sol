@@ -224,10 +224,18 @@ contract MarsGovernance is IMarsGovernance {
         bytes16 decision;
         uint256 totalSupply;
         uint256 quorumPercentage;
-        uint256[] voted;
+        bool quorumReached;
+        OutcomeVoting[] voted;
     }
 
-    function getOutcomeStatus(bool historic) external view returns (OutcomeStatus[] memory) {
+    struct OutcomeVoting {
+        bytes16 outcome;
+        uint256 percentage;
+        bool voted;
+        bool isWinningOutcome;
+    }
+
+    function getOutcomeStatus(bool historic, address me) external view returns (OutcomeStatus[] memory) {
         Proposals.ProposalInfo[] memory props;
         OutcomeStatus[] memory reply;
 
@@ -238,37 +246,61 @@ contract MarsGovernance is IMarsGovernance {
             for (uint256 i = 0; i < proposals.historic.length; i++) {
                 props[i] = proposals.info[i];
             }
-        } else {
-            props = proposals.info;
-            reply = new OutcomeStatus[](proposals.count);
+        } else { //TODO: need to review this... might be bug prone
+            props = new Proposals.ProposalInfo[](proposals.info.length - proposals.historic.length);
+            reply = new OutcomeStatus[](proposals.info.length - proposals.historic.length);
+            uint256 iter;
+
+            if(reply.length > 0)
+                for (uint256 i = 1; i < proposals.historic.length; i++) {
+                    for (uint256 j = proposals.historic[i-1]; i < proposals.historic[i]; j++) {
+                        props[iter] = proposals.info[j];
+                        iter++;
+                    }
+                }
+
+            if(reply.length > 1)
+                for (uint256 i = proposals.historic[proposals.historic.length-1]; i < proposals.info.length; i++) {
+                    props[iter] = proposals.info[i];
+                    iter++;
+                }
         }
 
         uint256 _votingPeriod = parameters.getVotingPeriod();
         uint256 DMTSupply = govToken.totalSupply();
 
-        for (uint256 i = 0; i < props.length; i++) {
-            reply[i].consensusReached = proposals.changeOutcomeProposal[i].consensusReached;
-            reply[i].market = proposals.changeOutcomeProposal[i].market;
-            reply[i].endDate = proposals.info[i].started + _votingPeriod;
-            reply[i].decision = proposals.changeOutcomeProposal[i].winningOutcome;
-            reply[i].totalSupply = proposals.info[i].totalInfluence;
-            if (DMTSupply != 0) reply[i].quorumPercentage = (reply[i].totalSupply * 100) / DMTSupply;
-            reply[i].voted = _percentages(proposals.changeOutcomeProposal[i].outcomeInfluence);
-        }
+        if(reply.length > 0)
+            for (uint256 i = 0; i < props.length; i++) {
+                reply[i].consensusReached = proposals.changeOutcomeProposal[i].consensusReached;
+                reply[i].market = proposals.changeOutcomeProposal[i].market;
+                reply[i].endDate = proposals.info[i].started + _votingPeriod;
+                reply[i].decision = proposals.changeOutcomeProposal[i].winningOutcome;
+                reply[i].totalSupply = proposals.info[i].totalInfluence;
+                if (DMTSupply != 0) reply[i].quorumPercentage = (reply[i].totalSupply * 100) / DMTSupply;
+                reply[i].quorumReached = reply[i].quorumPercentage >= 50;
+                reply[i].voted = _percentages(proposals.changeOutcomeProposal[i].outcomeInfluence, proposals.changeOutcomeProposal[i].outcomes, i, reply[i].decision, me);
+            }
 
         return reply;
     }
 
-    function _percentages(uint256[] memory arr) internal view returns (uint256[] memory) {
+    function _percentages(uint256[] memory influences, bytes16[] memory id, uint256 proposal, bytes16 winningOutcome, address _addr) internal view returns (OutcomeVoting[] memory) {
         uint256 biggestElement;
-        uint256[] memory percentages = new uint256[](arr.length);
+        OutcomeVoting[] memory stats = new OutcomeVoting[](influences.length);
 
-        for (uint256 i = 0; i < arr.length; i++) {
-            if (arr[i] > biggestElement) biggestElement = arr[i];
+        for (uint256 i = 0; i < influences.length; i++) {
+            if (influences[i] > biggestElement) biggestElement = influences[i];
         }
 
-        if (biggestElement != 0) for (uint256 i = 0; i < arr.length; i++) {percentages[i] = (arr[i] * 100) / biggestElement;}
-        return percentages;
+        if (biggestElement != 0) 
+            for (uint256 i = 0; i < influences.length; i++) {
+                stats[i].percentage = (influences[i] * 100) / biggestElement;
+                stats[i].outcome = id[i];
+                stats[i].voted = _haveIVoted(i, _addr);
+                stats[i].isWinningOutcome = stats[i].outcome == winningOutcome;
+            }
+        
+        return stats;
     }
 
     function iHaveVoted() external view override returns (uint256[] memory) {
@@ -276,6 +308,10 @@ contract MarsGovernance is IMarsGovernance {
     }
 
     function haveIVoted(uint256 i) external view override returns (bool) {
-        return voted[i][msg.sender];
+        return _haveIVoted(i, msg.sender);
+    }
+    
+    function _haveIVoted(uint256 i, address addr) internal view returns (bool) {
+        return voted[i][addr];
     }
 }
