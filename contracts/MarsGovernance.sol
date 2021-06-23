@@ -171,6 +171,7 @@ contract MarsGovernance is IMarsGovernance {
         } else if (tmp == Proposals.ProposalType.CHANGE_OUTCOME) {
             (Proposals.ProposalStatus status, uint256 indexMax) = proposals.changeOutcomeResult(_proposal);
             if (status == Proposals.ProposalStatus.APPROVED) {
+                proposals.changeOutcomeProposal[_proposal].winningOutcome = proposals.changeOutcomeProposal[_proposal].outcomes[indexMax];
                 emit Test(indexMax);
                 // settlement.setWinningOutcome(_proposal, proposals.changeOutcomeProposal[_proposal].outcomes[indexMax]);
                 return;
