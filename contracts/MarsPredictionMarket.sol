@@ -46,7 +46,7 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
         predictionTimeStart = block.timestamp;
         predictionTimeEnd = _predictionTimeEnd;
 
-        require(predictionTimeEnd > predictionTimeStart, "Endtime has to be more then start time");
+        // require(predictionTimeEnd > predictionTimeStart, "Endtime has to be more then start time");
 
         __Ownable_init();
         transferOwnership(owner);
@@ -255,5 +255,12 @@ contract MarsPredictionMarket is IPredictionMarket, Initializable, OwnableUpgrad
 
     function setParameters(address _newParameters) external override onlyOwner {
         parameters = Parameters(_newParameters);
+    }
+
+    function setToken(address _token, uint _proportion, uint _divider) external onlyOwner {
+        token = IERC20(_token);
+
+        startSharePrice = startSharePrice * _proportion / _divider;
+        endSharePrice = endSharePrice * _proportion / _divider;
     }
 }

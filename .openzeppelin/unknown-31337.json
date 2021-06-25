@@ -561,9 +561,9 @@
         }
       }
     },
-    "f977e7de2ea5021ed4e0f223be6060bd6a76499cadae978192bc8b1054f80c60": {
+    "9bb17443d0a1f268378538a4ecac155a00ef21b356e8c621d8cbc09e6cc11cd1": {
       "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-      "txHash": "0x147fed97afa35413219ad63b5f5072998ddb0312037a7c06e848a6051b230b5b",
+      "txHash": "0xa13a7961d001c0f71c2f758c63f94bd4222f15282cb760e7e5375ac8515dbd44",
       "layout": {
         "storage": [
           {
@@ -581,31 +581,31 @@
           {
             "contract": "MarsGovernance",
             "label": "proposals",
-            "type": "t_struct(Proposal)7505_storage",
+            "type": "t_struct(Proposal)7574_storage",
             "src": "contracts/MarsGovernance.sol:21"
           },
           {
             "contract": "MarsGovernance",
             "label": "marsFactory",
-            "type": "t_contract(IPredictionMarketFactory)7095",
+            "type": "t_contract(IPredictionMarketFactory)7164",
             "src": "contracts/MarsGovernance.sol:23"
           },
           {
             "contract": "MarsGovernance",
             "label": "parameters",
-            "type": "t_contract(IParameters)6970",
+            "type": "t_contract(IParameters)7039",
             "src": "contracts/MarsGovernance.sol:24"
           },
           {
             "contract": "MarsGovernance",
             "label": "settlement",
-            "type": "t_contract(Settlement)5875",
+            "type": "t_contract(Settlement)5910",
             "src": "contracts/MarsGovernance.sol:25"
           },
           {
             "contract": "MarsGovernance",
             "label": "register",
-            "type": "t_contract(IRegister)7294",
+            "type": "t_contract(IRegister)7363",
             "src": "contracts/MarsGovernance.sol:26"
           },
           {
@@ -618,44 +618,44 @@
             "contract": "MarsGovernance",
             "label": "threshold",
             "type": "t_uint256",
-            "src": "contracts/MarsGovernance.sol:37"
+            "src": "contracts/MarsGovernance.sol:29"
           },
           {
             "contract": "MarsGovernance",
             "label": "votedList",
             "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
-            "src": "contracts/MarsGovernance.sol:39"
+            "src": "contracts/MarsGovernance.sol:31"
           },
           {
             "contract": "MarsGovernance",
             "label": "voted",
-            "type": "t_mapping(t_uint256,t_mapping(t_address,t_bool))",
-            "src": "contracts/MarsGovernance.sol:41"
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(Voted)6850_storage))",
+            "src": "contracts/MarsGovernance.sol:33"
           }
         ],
         "types": {
-          "t_struct(Proposal)7505_storage": {
+          "t_struct(Proposal)7574_storage": {
             "label": "struct Proposals.Proposal",
             "members": [
               {
                 "label": "info",
-                "type": "t_array(t_struct(ProposalInfo)7516_storage)dyn_storage"
+                "type": "t_array(t_struct(ProposalInfo)7585_storage)dyn_storage"
               },
               {
                 "label": "createMarketProposal",
-                "type": "t_mapping(t_uint256,t_struct(CreateMarketProposal)7551_storage)"
+                "type": "t_mapping(t_uint256,t_struct(CreateMarketProposal)7620_storage)"
               },
               {
                 "label": "addOracleProposal",
-                "type": "t_mapping(t_uint256,t_struct(AddOracleProposal)7557_storage)"
+                "type": "t_mapping(t_uint256,t_struct(AddOracleProposal)7626_storage)"
               },
               {
                 "label": "changeOutcomeProposal",
-                "type": "t_mapping(t_uint256,t_struct(ChangeOutcomeProposal)7576_storage)"
+                "type": "t_mapping(t_uint256,t_struct(ChangeOutcomeProposal)7645_storage)"
               },
               {
                 "label": "removeOracleProposal",
-                "type": "t_mapping(t_uint256,t_struct(RemoveOracleProposal)7563_storage)"
+                "type": "t_mapping(t_uint256,t_struct(RemoveOracleProposal)7632_storage)"
               },
               {
                 "label": "historic",
@@ -667,15 +667,15 @@
               }
             ]
           },
-          "t_array(t_struct(ProposalInfo)7516_storage)dyn_storage": {
+          "t_array(t_struct(ProposalInfo)7585_storage)dyn_storage": {
             "label": "struct Proposals.ProposalInfo[]"
           },
-          "t_struct(ProposalInfo)7516_storage": {
+          "t_struct(ProposalInfo)7585_storage": {
             "label": "struct Proposals.ProposalInfo",
             "members": [
               {
                 "label": "proposalType",
-                "type": "t_enum(ProposalType)7475"
+                "type": "t_enum(ProposalType)7544"
               },
               {
                 "label": "started",
@@ -687,17 +687,17 @@
               },
               {
                 "label": "result",
-                "type": "t_enum(ProposalStatus)7468"
+                "type": "t_enum(ProposalStatus)7537"
               }
             ]
           },
-          "t_mapping(t_uint256,t_struct(CreateMarketProposal)7551_storage)": {
+          "t_mapping(t_uint256,t_struct(CreateMarketProposal)7620_storage)": {
             "label": "mapping(uint256 => struct Proposals.CreateMarketProposal)"
           },
           "t_uint256": {
             "label": "uint256"
           },
-          "t_struct(CreateMarketProposal)7551_storage": {
+          "t_struct(CreateMarketProposal)7620_storage": {
             "label": "struct Proposals.CreateMarketProposal",
             "members": [
               {
@@ -718,7 +718,7 @@
               },
               {
                 "label": "outcomes",
-                "type": "t_array(t_struct(Outcome)7456_storage)dyn_storage"
+                "type": "t_array(t_struct(Outcome)7525_storage)dyn_storage"
               },
               {
                 "label": "token",
@@ -734,7 +734,7 @@
               },
               {
                 "label": "voting",
-                "type": "t_struct(Voting)7523_storage"
+                "type": "t_struct(Voting)7592_storage"
               },
               {
                 "label": "dueDate",
@@ -750,10 +750,10 @@
               }
             ]
           },
-          "t_mapping(t_uint256,t_struct(AddOracleProposal)7557_storage)": {
+          "t_mapping(t_uint256,t_struct(AddOracleProposal)7626_storage)": {
             "label": "mapping(uint256 => struct Proposals.AddOracleProposal)"
           },
-          "t_struct(AddOracleProposal)7557_storage": {
+          "t_struct(AddOracleProposal)7626_storage": {
             "label": "struct Proposals.AddOracleProposal",
             "members": [
               {
@@ -762,14 +762,14 @@
               },
               {
                 "label": "voting",
-                "type": "t_struct(Voting)7523_storage"
+                "type": "t_struct(Voting)7592_storage"
               }
             ]
           },
-          "t_mapping(t_uint256,t_struct(ChangeOutcomeProposal)7576_storage)": {
+          "t_mapping(t_uint256,t_struct(ChangeOutcomeProposal)7645_storage)": {
             "label": "mapping(uint256 => struct Proposals.ChangeOutcomeProposal)"
           },
-          "t_struct(ChangeOutcomeProposal)7576_storage": {
+          "t_struct(ChangeOutcomeProposal)7645_storage": {
             "label": "struct Proposals.ChangeOutcomeProposal",
             "members": [
               {
@@ -794,10 +794,10 @@
               }
             ]
           },
-          "t_mapping(t_uint256,t_struct(RemoveOracleProposal)7563_storage)": {
+          "t_mapping(t_uint256,t_struct(RemoveOracleProposal)7632_storage)": {
             "label": "mapping(uint256 => struct Proposals.RemoveOracleProposal)"
           },
-          "t_struct(RemoveOracleProposal)7563_storage": {
+          "t_struct(RemoveOracleProposal)7632_storage": {
             "label": "struct Proposals.RemoveOracleProposal",
             "members": [
               {
@@ -806,14 +806,14 @@
               },
               {
                 "label": "voting",
-                "type": "t_struct(Voting)7523_storage"
+                "type": "t_struct(Voting)7592_storage"
               }
             ]
           },
           "t_array(t_uint256)dyn_storage": {
             "label": "uint256[]"
           },
-          "t_enum(ProposalType)7475": {
+          "t_enum(ProposalType)7544": {
             "label": "enum Proposals.ProposalType",
             "members": [
               "CREATE_MARKET",
@@ -824,7 +824,7 @@
               "CHANGE_VALUE"
             ]
           },
-          "t_enum(ProposalStatus)7468": {
+          "t_enum(ProposalStatus)7537": {
             "label": "enum Proposals.ProposalStatus",
             "members": [
               "IN_PROGRESS",
@@ -841,10 +841,10 @@
           "t_string_storage": {
             "label": "string"
           },
-          "t_array(t_struct(Outcome)7456_storage)dyn_storage": {
+          "t_array(t_struct(Outcome)7525_storage)dyn_storage": {
             "label": "struct Market.Outcome[]"
           },
-          "t_struct(Outcome)7456_storage": {
+          "t_struct(Outcome)7525_storage": {
             "label": "struct Market.Outcome",
             "members": [
               {
@@ -864,7 +864,7 @@
           "t_address": {
             "label": "address"
           },
-          "t_struct(Voting)7523_storage": {
+          "t_struct(Voting)7592_storage": {
             "label": "struct Proposals.Voting",
             "members": [
               {
@@ -887,16 +887,16 @@
           "t_bool": {
             "label": "bool"
           },
-          "t_contract(IPredictionMarketFactory)7095": {
+          "t_contract(IPredictionMarketFactory)7164": {
             "label": "contract IPredictionMarketFactory"
           },
-          "t_contract(IParameters)6970": {
+          "t_contract(IParameters)7039": {
             "label": "contract IParameters"
           },
-          "t_contract(Settlement)5875": {
+          "t_contract(Settlement)5910": {
             "label": "contract Settlement"
           },
-          "t_contract(IRegister)7294": {
+          "t_contract(IRegister)7363": {
             "label": "contract IRegister"
           },
           "t_contract(IERC20)916": {
@@ -905,11 +905,24 @@
           "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
             "label": "mapping(address => uint256[])"
           },
-          "t_mapping(t_uint256,t_mapping(t_address,t_bool))": {
-            "label": "mapping(uint256 => mapping(address => bool))"
+          "t_mapping(t_uint256,t_mapping(t_address,t_struct(Voted)6850_storage))": {
+            "label": "mapping(uint256 => mapping(address => struct IMarsGovernance.Voted))"
           },
-          "t_mapping(t_address,t_bool)": {
-            "label": "mapping(address => bool)"
+          "t_mapping(t_address,t_struct(Voted)6850_storage)": {
+            "label": "mapping(address => struct IMarsGovernance.Voted)"
+          },
+          "t_struct(Voted)6850_storage": {
+            "label": "struct IMarsGovernance.Voted",
+            "members": [
+              {
+                "label": "outcomeIndex",
+                "type": "t_uint256"
+              },
+              {
+                "label": "voted",
+                "type": "t_bool"
+              }
+            ]
           }
         }
       }

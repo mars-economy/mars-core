@@ -1346,6 +1346,965 @@
           }
         }
       }
+    },
+    "4a90c8c7f276b3a3cf8d18323d947496280a464ddefc8e5685dfff03b7159369": {
+      "address": "0x4574d226c2377681DD6e842c72193f9e51Fd744E",
+      "txHash": "0xbe4ee2d37a6ba5e4f275fa59c9df1deee6429900ba6090119f20a6bf7f43bf9f",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:28"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "Settlement",
+            "label": "list",
+            "type": "t_struct(List)6548_storage",
+            "src": "contracts/Settlement.sol:15"
+          },
+          {
+            "contract": "Settlement",
+            "label": "staked",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/Settlement.sol:20"
+          },
+          {
+            "contract": "Settlement",
+            "label": "oracleOutcome",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_bytes16))",
+            "src": "contracts/Settlement.sol:21"
+          },
+          {
+            "contract": "Settlement",
+            "label": "marketStatus",
+            "type": "t_mapping(t_address,t_struct(MarketStatus)7469_storage)",
+            "src": "contracts/Settlement.sol:22"
+          },
+          {
+            "contract": "Settlement",
+            "label": "oracles",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts/Settlement.sol:24"
+          },
+          {
+            "contract": "Settlement",
+            "label": "marsToken",
+            "type": "t_contract(IERC20)916",
+            "src": "contracts/Settlement.sol:25"
+          },
+          {
+            "contract": "Settlement",
+            "label": "parameters",
+            "type": "t_contract(Parameters)3787",
+            "src": "contracts/Settlement.sol:26"
+          }
+        ],
+        "types": {
+          "t_struct(List)6548_storage": {
+            "label": "struct StructuredLinkedList.List",
+            "members": [
+              {
+                "label": "nodes",
+                "type": "t_mapping(t_uint256,t_struct(Node)6540_storage)"
+              },
+              {
+                "label": "size",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_mapping(t_uint256,t_struct(Node)6540_storage)": {
+            "label": "mapping(uint256 => struct StructuredLinkedList.Node)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_struct(Node)6540_storage": {
+            "label": "struct StructuredLinkedList.Node",
+            "members": [
+              {
+                "label": "dueDate",
+                "type": "t_uint256"
+              },
+              {
+                "label": "market",
+                "type": "t_address"
+              },
+              {
+                "label": "next",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_bytes16))": {
+            "label": "mapping(address => mapping(address => bytes16))"
+          },
+          "t_mapping(t_address,t_bytes16)": {
+            "label": "mapping(address => bytes16)"
+          },
+          "t_bytes16": {
+            "label": "bytes16"
+          },
+          "t_mapping(t_address,t_struct(MarketStatus)7469_storage)": {
+            "label": "mapping(address => struct ISettlement.MarketStatus)"
+          },
+          "t_struct(MarketStatus)7469_storage": {
+            "label": "struct ISettlement.MarketStatus",
+            "members": [
+              {
+                "label": "dueDate",
+                "type": "t_uint256"
+              },
+              {
+                "label": "oraclesVoted",
+                "type": "t_uint256"
+              },
+              {
+                "label": "winningOutcome",
+                "type": "t_bytes16"
+              },
+              {
+                "label": "finalized",
+                "type": "t_bool"
+              },
+              {
+                "label": "startedDispute",
+                "type": "t_bool"
+              },
+              {
+                "label": "disputeOpenner",
+                "type": "t_address"
+              },
+              {
+                "label": "disputeStake",
+                "type": "t_uint256"
+              },
+              {
+                "label": "rewardForDisputeOpener",
+                "type": "t_uint256"
+              },
+              {
+                "label": "correctlyVoted",
+                "type": "t_mapping(t_address,t_bool)"
+              },
+              {
+                "label": "correctlyVotedCount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "hasCollected",
+                "type": "t_mapping(t_address,t_bool)"
+              },
+              {
+                "label": "collected",
+                "type": "t_uint256"
+              },
+              {
+                "label": "oraclesCountAtStart",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_contract(IERC20)916": {
+            "label": "contract IERC20"
+          },
+          "t_contract(Parameters)3787": {
+            "label": "contract Parameters"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "47b7cf44238abda7fd91454f57b98f6a39d160a0d50377d39207fbd71d562310": {
+      "address": "0xCB754995f21a63D848CCdee326d3b2213f37338E",
+      "txHash": "0x4252a307488e17ca9c6c48ae9a255e3b589547d19004c8ce3a40c98b786857e2",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:28"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "MarsPredictionMarketFactory",
+            "label": "settlement",
+            "type": "t_address",
+            "src": "contracts/MarsPredictionMarketFactory.sol:17"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "745587aa53ce065f2b37233e346f26026cb16a915219cf1473207731194de75a": {
+      "address": "0x14D45fF1Bc44E61564eeFefB30fFb7E7e576cE62",
+      "txHash": "0x70a480148bb88969a35e3d9d0256126caadfe9acfc36fda54ed5d3511125800b",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:28"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "Register",
+            "label": "categories",
+            "type": "t_array(t_struct(CategoryInfo)7240_storage)dyn_storage",
+            "src": "contracts/Register.sol:21"
+          },
+          {
+            "contract": "Register",
+            "label": "milestones",
+            "type": "t_array(t_struct(MilestoneInfo)7254_storage)dyn_storage",
+            "src": "contracts/Register.sol:22"
+          },
+          {
+            "contract": "Register",
+            "label": "predictionMarkets",
+            "type": "t_array(t_struct(PredictionInfo)7276_storage)dyn_storage",
+            "src": "contracts/Register.sol:23"
+          },
+          {
+            "contract": "Register",
+            "label": "outcomes",
+            "type": "t_array(t_struct(OutcomeInfo)7289_storage)dyn_storage",
+            "src": "contracts/Register.sol:24"
+          },
+          {
+            "contract": "Register",
+            "label": "settlement",
+            "type": "t_contract(Settlement)5961",
+            "src": "contracts/Register.sol:26"
+          },
+          {
+            "contract": "Register",
+            "label": "parameters",
+            "type": "t_contract(Parameters)3787",
+            "src": "contracts/Register.sol:27"
+          },
+          {
+            "contract": "Register",
+            "label": "slot",
+            "type": "t_mapping(t_bytes16,t_uint256)",
+            "src": "contracts/Register.sol:29"
+          },
+          {
+            "contract": "Register",
+            "label": "marketSlot",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/Register.sol:30"
+          }
+        ],
+        "types": {
+          "t_array(t_struct(CategoryInfo)7240_storage)dyn_storage": {
+            "label": "struct IRegister.CategoryInfo[]"
+          },
+          "t_struct(CategoryInfo)7240_storage": {
+            "label": "struct IRegister.CategoryInfo",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_bytes16"
+              },
+              {
+                "label": "position",
+                "type": "t_uint256"
+              },
+              {
+                "label": "name",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "description",
+                "type": "t_string_storage"
+              }
+            ]
+          },
+          "t_bytes16": {
+            "label": "bytes16"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_array(t_struct(MilestoneInfo)7254_storage)dyn_storage": {
+            "label": "struct IRegister.MilestoneInfo[]"
+          },
+          "t_struct(MilestoneInfo)7254_storage": {
+            "label": "struct IRegister.MilestoneInfo",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_bytes16"
+              },
+              {
+                "label": "category",
+                "type": "t_bytes16"
+              },
+              {
+                "label": "position",
+                "type": "t_uint256"
+              },
+              {
+                "label": "name",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "description",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(MilestoneStatus)7222"
+              }
+            ]
+          },
+          "t_enum(MilestoneStatus)7222": {
+            "label": "enum IRegister.MilestoneStatus",
+            "members": [
+              "Historical",
+              "Current",
+              "Future"
+            ]
+          },
+          "t_array(t_struct(PredictionInfo)7276_storage)dyn_storage": {
+            "label": "struct IRegister.PredictionInfo[]"
+          },
+          "t_struct(PredictionInfo)7276_storage": {
+            "label": "struct IRegister.PredictionInfo",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_address"
+              },
+              {
+                "label": "milestone",
+                "type": "t_bytes16"
+              },
+              {
+                "label": "position",
+                "type": "t_uint256"
+              },
+              {
+                "label": "name",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "description",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "state",
+                "type": "t_enum(PredictionMarketState)7231"
+              },
+              {
+                "label": "token",
+                "type": "t_address"
+              },
+              {
+                "label": "dueDate",
+                "type": "t_uint256"
+              },
+              {
+                "label": "predictionTimeEnd",
+                "type": "t_uint256"
+              },
+              {
+                "label": "predictorsNumber",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_enum(PredictionMarketState)7231": {
+            "label": "enum IRegister.PredictionMarketState",
+            "members": [
+              "Open",
+              "Waiting",
+              "SettlementOracles",
+              "SettlementWithConsensus",
+              "SettlementWithoutConsensus",
+              "Dispute",
+              "Voting",
+              "Closed"
+            ]
+          },
+          "t_array(t_struct(OutcomeInfo)7289_storage)dyn_storage": {
+            "label": "struct IRegister.OutcomeInfo[]"
+          },
+          "t_struct(OutcomeInfo)7289_storage": {
+            "label": "struct IRegister.OutcomeInfo",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_bytes16"
+              },
+              {
+                "label": "prediction",
+                "type": "t_address"
+              },
+              {
+                "label": "position",
+                "type": "t_uint256"
+              },
+              {
+                "label": "name",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "stakedAmount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "winning",
+                "type": "t_uint8"
+              }
+            ]
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_contract(Settlement)5961": {
+            "label": "contract Settlement"
+          },
+          "t_contract(Parameters)3787": {
+            "label": "contract Parameters"
+          },
+          "t_mapping(t_bytes16,t_uint256)": {
+            "label": "mapping(bytes16 => uint256)"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "81303210280993c5ba94dc32efb66069bd99a780dd81c65f6bf9b0f5258868db": {
+      "address": "0xaB6CB0D639D185383BE8dd18ee7AE6E6cDD4fC7a",
+      "txHash": "0x5d748a9d10c8733457705036302189d4229f7a6a81b0c5bcdb4a0449742a707b",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:28"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "Register",
+            "label": "categories",
+            "type": "t_array(t_struct(CategoryInfo)7232_storage)dyn_storage",
+            "src": "contracts/Register.sol:21"
+          },
+          {
+            "contract": "Register",
+            "label": "milestones",
+            "type": "t_array(t_struct(MilestoneInfo)7246_storage)dyn_storage",
+            "src": "contracts/Register.sol:22"
+          },
+          {
+            "contract": "Register",
+            "label": "predictionMarkets",
+            "type": "t_array(t_struct(PredictionInfo)7268_storage)dyn_storage",
+            "src": "contracts/Register.sol:23"
+          },
+          {
+            "contract": "Register",
+            "label": "outcomes",
+            "type": "t_array(t_struct(OutcomeInfo)7281_storage)dyn_storage",
+            "src": "contracts/Register.sol:24"
+          },
+          {
+            "contract": "Register",
+            "label": "settlement",
+            "type": "t_contract(Settlement)5953",
+            "src": "contracts/Register.sol:26"
+          },
+          {
+            "contract": "Register",
+            "label": "parameters",
+            "type": "t_contract(Parameters)3787",
+            "src": "contracts/Register.sol:27"
+          },
+          {
+            "contract": "Register",
+            "label": "slot",
+            "type": "t_mapping(t_bytes16,t_uint256)",
+            "src": "contracts/Register.sol:29"
+          },
+          {
+            "contract": "Register",
+            "label": "marketSlot",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/Register.sol:30"
+          }
+        ],
+        "types": {
+          "t_array(t_struct(CategoryInfo)7232_storage)dyn_storage": {
+            "label": "struct IRegister.CategoryInfo[]"
+          },
+          "t_struct(CategoryInfo)7232_storage": {
+            "label": "struct IRegister.CategoryInfo",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_bytes16"
+              },
+              {
+                "label": "position",
+                "type": "t_uint256"
+              },
+              {
+                "label": "name",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "description",
+                "type": "t_string_storage"
+              }
+            ]
+          },
+          "t_bytes16": {
+            "label": "bytes16"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_array(t_struct(MilestoneInfo)7246_storage)dyn_storage": {
+            "label": "struct IRegister.MilestoneInfo[]"
+          },
+          "t_struct(MilestoneInfo)7246_storage": {
+            "label": "struct IRegister.MilestoneInfo",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_bytes16"
+              },
+              {
+                "label": "category",
+                "type": "t_bytes16"
+              },
+              {
+                "label": "position",
+                "type": "t_uint256"
+              },
+              {
+                "label": "name",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "description",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(MilestoneStatus)7214"
+              }
+            ]
+          },
+          "t_enum(MilestoneStatus)7214": {
+            "label": "enum IRegister.MilestoneStatus",
+            "members": [
+              "Historical",
+              "Current",
+              "Future"
+            ]
+          },
+          "t_array(t_struct(PredictionInfo)7268_storage)dyn_storage": {
+            "label": "struct IRegister.PredictionInfo[]"
+          },
+          "t_struct(PredictionInfo)7268_storage": {
+            "label": "struct IRegister.PredictionInfo",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_address"
+              },
+              {
+                "label": "milestone",
+                "type": "t_bytes16"
+              },
+              {
+                "label": "position",
+                "type": "t_uint256"
+              },
+              {
+                "label": "name",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "description",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "state",
+                "type": "t_enum(PredictionMarketState)7223"
+              },
+              {
+                "label": "token",
+                "type": "t_address"
+              },
+              {
+                "label": "dueDate",
+                "type": "t_uint256"
+              },
+              {
+                "label": "predictionTimeEnd",
+                "type": "t_uint256"
+              },
+              {
+                "label": "predictorsNumber",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_enum(PredictionMarketState)7223": {
+            "label": "enum IRegister.PredictionMarketState",
+            "members": [
+              "Open",
+              "Waiting",
+              "SettlementOracles",
+              "SettlementWithConsensus",
+              "SettlementWithoutConsensus",
+              "Dispute",
+              "Voting",
+              "Closed"
+            ]
+          },
+          "t_array(t_struct(OutcomeInfo)7281_storage)dyn_storage": {
+            "label": "struct IRegister.OutcomeInfo[]"
+          },
+          "t_struct(OutcomeInfo)7281_storage": {
+            "label": "struct IRegister.OutcomeInfo",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_bytes16"
+              },
+              {
+                "label": "prediction",
+                "type": "t_address"
+              },
+              {
+                "label": "position",
+                "type": "t_uint256"
+              },
+              {
+                "label": "name",
+                "type": "t_string_storage"
+              },
+              {
+                "label": "stakedAmount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "winning",
+                "type": "t_uint8"
+              }
+            ]
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_contract(Settlement)5953": {
+            "label": "contract Settlement"
+          },
+          "t_contract(Parameters)3787": {
+            "label": "contract Parameters"
+          },
+          "t_mapping(t_bytes16,t_uint256)": {
+            "label": "mapping(bytes16 => uint256)"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "49cb710be40c958d72330568405376d8b2ef34e1f25782eba96dada4538f04b2": {
+      "address": "0x8DdBdb127C960E28e7CD2EF11c492cd1ed4364fA",
+      "txHash": "0xff255e136a1e80479a1d58bd5a79bda93a7bd9ca2f363d3ee43cd5bba4baefd9",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:28"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "MarsPredictionMarketFactory",
+            "label": "settlement",
+            "type": "t_address",
+            "src": "contracts/MarsPredictionMarketFactory.sol:17"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "b86a8b6fa5420590f2e2eb067d30058adecceafa262d5d1e4dd7f0381cf919b4": {
+      "address": "0xCADC94B2ceF6d00EE239DD0629AB25bfadd20D14",
+      "txHash": "0xa139893ba5e7ca5df8532d5e1ea56fdd3a8319259c9df53c91518d8cd09bab39",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:28"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "MarsPredictionMarketFactory",
+            "label": "settlement",
+            "type": "t_address",
+            "src": "contracts/MarsPredictionMarketFactory.sol:17"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "proxies": [
@@ -1423,6 +2382,111 @@
       "address": "0xaE51E3322071E5231C7E7Af81f3Fa2F03EbC65aE",
       "kind": "transparent",
       "txHash": "0x1902e0eb069cfc29b9d67aca7b47ea5fcee1f340b2504ebb36763f9c76bb5fea"
+    },
+    {
+      "address": "0x6d40cABe554b18E3F3Ba17FBF859D9d953c12D53",
+      "kind": "transparent",
+      "txHash": "0x35eedcaac20a44fe7713b3f07230494b6adef92b060f9822dd2daf91f01aab9f"
+    },
+    {
+      "address": "0x98c09854aDf75Db021228ce1519d32893c597006",
+      "kind": "transparent",
+      "txHash": "0xa08faf33fa563c165a194bb599579025ba0d918825e8426f3055bd06e368f341"
+    },
+    {
+      "address": "0x52E3E058177Ac81CC95866A47158105EC2900D2e",
+      "kind": "transparent",
+      "txHash": "0x64ba5ae2b1d9567c0646f55962c86c9f03993e0388ff5f039bc7b54ea226f8bf"
+    },
+    {
+      "address": "0xeD297C16f994bca480F6bd53155B84dD05b99beD",
+      "kind": "transparent",
+      "txHash": "0xe13e21f54a4f75bdd594e5ae3eb82343bf297a3b7bc3152ff955b1424e6e29e7"
+    },
+    {
+      "address": "0xa0ffCBec5F14A697274DA10f1F67679914b97a73",
+      "kind": "transparent",
+      "txHash": "0x0b08fc22379a13e2d70e966514bf37d7bc1680ffb89da11b0d32f4bc16b005e9"
+    },
+    {
+      "address": "0x91591aeA49046103d468230d2d378A2b1027E469",
+      "kind": "transparent",
+      "txHash": "0x8ba8a7ee25d571588632c22d292db08e4aad0cb6525039ce12fb7a5125ded285"
+    },
+    {
+      "address": "0x0133AEE1055790a7Df19eB84BcD9FF5c7c850eA7",
+      "kind": "transparent",
+      "txHash": "0xb1cbdde5548eb82ad626793e1fd51937e5c98554685bef983b0fcd844c7e7da1"
+    },
+    {
+      "address": "0x5c09BFDe0Ced5504dE7F8643446978694A7b5733",
+      "kind": "transparent",
+      "txHash": "0x2c09efe9376598dee7bc7882550ab49bd2d6654571ba3bbbb2c7197952bec2c9"
+    },
+    {
+      "address": "0x3c1EfadfD197829B185299A3B3C9CB37801B3Df8",
+      "kind": "transparent",
+      "txHash": "0x10f56fd2e0af4055dbc214babdb1b762bfbed0122b9edc12141768558b0aa119"
+    },
+    {
+      "address": "0x6646fdb590fA26A3327e502259c67a19e46fb2a2",
+      "kind": "transparent",
+      "txHash": "0x476dceea8373ade640a01e80c986344d92950141a32985dd512737ba8919ee5e"
+    },
+    {
+      "address": "0x3F8f8e54910B8748115Dc3d6aDA95C61e9FdbDAf",
+      "kind": "transparent",
+      "txHash": "0xbf9391552990629a48d002d4b3386e113496403e4e514cdbe646088426384a1c"
+    },
+    {
+      "address": "0x529D9dDd9f8Ad80E22b5E1E2449685f25FB30dA7",
+      "kind": "transparent",
+      "txHash": "0xd925871708211c100ff7703de50d43bedff77631bad69a9482f0b47e1a96e661"
+    },
+    {
+      "address": "0xF6b47e67b54165995f358d83132303F1050486C6",
+      "kind": "transparent",
+      "txHash": "0x3c32c2bd33ae3b90249516fd8bf236a3d98c42c379aaf5a9c64acc1a0ceaed02"
+    },
+    {
+      "address": "0x7be83B745C2b9F141bCAf589F3D14aEb35184f05",
+      "kind": "transparent",
+      "txHash": "0x436c2db363381b1c424fc863cc517ffeb04469d698b0e0898a6a9e9b9329efc2"
+    },
+    {
+      "address": "0x155Ab266C02b3A76b0009e98787AcD5b4A432E56",
+      "kind": "transparent",
+      "txHash": "0x6b0c93d4a5f5b6be615a881dc6ba87788d754127ecc16f174c45303b025dc57f"
+    },
+    {
+      "address": "0x0750Ef8d204D2a64C79bB7aDb0FEf376C1EaB1E7",
+      "kind": "transparent",
+      "txHash": "0xec03906c756c7b39bf2ca196df5728986b2fc7981dbcc2aba21b2d5b5210e53c"
+    },
+    {
+      "address": "0x161d2F62d95ac707a4826955B906f71Bc4ECe3Ad",
+      "kind": "transparent",
+      "txHash": "0x0c78460c694ee8e40b9ff5d0f1a283d37611054030b03effa7e716457b29e606"
+    },
+    {
+      "address": "0x34200fF4Ca936dDb7EE95F263C07B2692aECa4f1",
+      "kind": "transparent",
+      "txHash": "0xb6cbe2317b61522e47335286c8cbb94ed633445519d706a0c77213e69813ce03"
+    },
+    {
+      "address": "0x9D3BF3C81F5eC8B4567C0767879969c968da2f22",
+      "kind": "transparent",
+      "txHash": "0x215c7abd7d8b5428c4abbb05432e2707d6867681cdff19459aa805e300cf9df3"
+    },
+    {
+      "address": "0xeCBB9547af62A7aa6dBD1526477ef427C9dcf17f",
+      "kind": "transparent",
+      "txHash": "0x6c11a8c5db92e8fc9616ed08ca707d074f373c65a91c383d969f1be8018eb8d6"
+    },
+    {
+      "address": "0xF14Eaefa1a7aaF94BC615F90D1852C14e5cfBc79",
+      "kind": "transparent",
+      "txHash": "0xfac79dbf55180e856bf015f143c44b27311ef809f4d7a4754ee6ebf3b42dda15"
     }
   ],
   "admin": {

@@ -13,6 +13,8 @@ import "./MarsPredictionMarketFactory.sol";
 import "./Settlement.sol";
 import "./Parameters.sol";
 
+import "hardhat/console.sol"; //TODO: REMOVE
+
 import "./libraries/Market.sol";
 
 contract Register is IRegister, Initializable, OwnableUpgradeable {
@@ -91,7 +93,7 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         uint256 predictionTimeEnd,
         Market.Outcome[] calldata outcomes
     ) external override onlyOwner returns (address) {
-        require(dueDate > block.timestamp, "MARS: Invalid prediction market due date");
+        // require(dueDate > block.timestamp, "MARS: Invalid prediction market due date"); //FIXME:
 
         PredictionInfo memory market;
 
@@ -151,21 +153,12 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         PredictionInfo[] memory pred = new PredictionInfo[](predictionMarkets.length);
         OutcomeInfo[] memory out = new OutcomeInfo[](outcomes.length);
 
-        uint256 oracleSettlementTimeout = parameters.getOracleSettlementPeriod();
-        uint256 disputeTimeout = parameters.getDisputePeriod();
-
         for (uint256 i = 0; i < predictionMarkets.length; i++) {
             pred[i] = predictionMarkets[i];
 
             uint256 predictionTimeEnd = MarsPredictionMarket(pred[i].id).getPredictionTimeEnd();
 
-            if (
-                MarsPredictionMarket(pred[i].id).winningOutcome() != bytes16(0) ||
-                (pred[i].dueDate + oracleSettlementTimeout + disputeTimeout < _currentTime && settlement.reachedConsensus(pred[i].id))
-            ) pred[i].state = PredictionMarketState.Closed;
-            else if (predictionTimeEnd < _currentTime && _currentTime < pred[i].dueDate) pred[i].state = PredictionMarketState.Waiting;
-            else if (predictionTimeEnd > _currentTime) pred[i].state = PredictionMarketState.Open;
-            else pred[i].state = PredictionMarketState.Settlement;
+            pred[i].state = calculateState(pred[i], _currentTime, predictionTimeEnd);
 
             pred[i].predictorsNumber = MarsPredictionMarket(pred[i].id).predictorsNumber();
             pred[i].predictionTimeEnd = predictionTimeEnd;
@@ -180,5 +173,29 @@ contract Register is IRegister, Initializable, OwnableUpgradeable {
         }
 
         return (categories, milestones, pred, out);
+    }
+
+    function calculateState(
+        PredictionInfo memory pred,
+        uint256 _currentTime,
+        uint256 predictionTimeEnd
+    ) internal view returns (PredictionMarketState) {
+        uint256 oracleSettlementTimeout = parameters.getOracleSettlementPeriod();
+        uint256 disputeTimeout = parameters.getDisputePeriod();
+
+        bool reached = settlement.reachedConsensus(pred.id);
+        bool startedDispute = settlement.isDisputeStarted(pred.id);
+
+        //enum PredictionMarketState {Open, Waiting, SettlementOracles, 
+        //SettlementWithConsensus, SettlementWithoutConsensus, Dispute, Voting, Closed}
+
+        if (settlement.isFinalized(pred.id)) return PredictionMarketState.Closed;
+        else if (predictionTimeEnd > _currentTime) return PredictionMarketState.Open;
+        else if (predictionTimeEnd < _currentTime && _currentTime < pred.dueDate) return PredictionMarketState.Waiting;
+        else if (_currentTime > pred.dueDate && _currentTime < pred.dueDate + oracleSettlementTimeout) return PredictionMarketState.SettlementOracles;
+        else if (reached && !startedDispute && _currentTime > pred.dueDate + oracleSettlementTimeout) return PredictionMarketState.SettlementWithConsensus;
+        else if (!reached && !startedDispute && _currentTime > pred.dueDate + oracleSettlementTimeout) return PredictionMarketState.SettlementWithoutConsensus;
+        else if (reached && startedDispute) return PredictionMarketState.Dispute;
+        else if (!reached && startedDispute) return PredictionMarketState.Voting;
     }
 }

@@ -289,4 +289,12 @@ contract Settlement is ISettlement, Initializable, OwnableUpgradeable {
     function getCorrectlyVotedCount(address _market) external view override returns (uint256) {
         return marketStatus[_market].correctlyVotedCount;
     }
+
+    function isDisputeStarted(address _market) external view returns (bool) {
+        return marketStatus[_market].startedDispute;
+    }
+
+    function isFinalized(address _market) external view returns (bool) {
+        return marketStatus[_market].finalized;
+    }
 }

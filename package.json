@@ -16,6 +16,7 @@
     "format": "yarn prettier && yarn lint",
     "deploy": "npx hardhat run --network bsctestnet deploy/deploy.ts",
     "deployGov": "npx hardhat run --network bsctestnet deploy/deployGov.ts",
+    "deployReg": "npx hardhat run --network bsctestnet deploy/deployReg.ts",
     "coverage": "npx hardhat coverage",
     "deploy-bscmainnet": "npx hardhat run --network bscmainnet deploy/deploy.ts"
   },

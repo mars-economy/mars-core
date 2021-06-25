@@ -29,7 +29,7 @@ contract MarsPredictionMarketFactory is IPredictionMarketFactory, Initializable,
         uint256 startSharePrice,
         uint256 endSharePrice
     ) external override onlyOwner returns (address) {
-        require(predictionTimeEnd > block.timestamp, "MARS: Invalid prediction market due date");
+        // require(predictionTimeEnd > block.timestamp, "MARS: Invalid prediction market due date"); //FIXME:
 
         address predictionMarket = _createMarketContract(token, predictionTimeEnd, outcomes, owner(), startSharePrice, endSharePrice);
 

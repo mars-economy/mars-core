@@ -5,7 +5,7 @@ import "../libraries/Market.sol";
 
 interface IRegister {
     enum MilestoneStatus {Historical, Current, Future}
-    enum PredictionMarketState {Open, Settlement, Closed, Waiting}
+    enum PredictionMarketState {Open, Waiting, SettlementOracles, SettlementWithConsensus, SettlementWithoutConsensus, Dispute, Voting, Closed}
 
     struct CategoryInfo {
         bytes16 id;
