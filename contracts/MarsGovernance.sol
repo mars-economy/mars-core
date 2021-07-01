@@ -160,6 +160,7 @@ contract MarsGovernance is IMarsGovernance, Initializable {
                 if (DMTSupply != 0) reply[i].quorumPercentage = (reply[i].totalSupply * 100) / DMTSupply;
                 reply[i].quorumReached = reply[i].quorumPercentage >= 50;
                 reply[i].voted = _percentages(proposals.changeOutcomeProposal[i].outcomeInfluence, proposals.changeOutcomeProposal[i].outcomes, i, reply[i].decision, me);
+                reply[i].proposalId = i;
             }
 
         return reply;
@@ -179,7 +180,6 @@ contract MarsGovernance is IMarsGovernance, Initializable {
                 stats[i].outcome = id[i];
                 stats[i].voted = _haveIVoted(proposal, _addr).outcomeIndex == i;
                 stats[i].isWinningOutcome = stats[i].outcome == winningOutcome;
-                stats[i].proposalId = i;
             }
         
         return stats;
