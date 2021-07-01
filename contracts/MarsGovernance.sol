@@ -179,6 +179,7 @@ contract MarsGovernance is IMarsGovernance, Initializable {
                 stats[i].outcome = id[i];
                 stats[i].voted = _haveIVoted(proposal, _addr).outcomeIndex == i;
                 stats[i].isWinningOutcome = stats[i].outcome == winningOutcome;
+                stats[i].proposalId = i;
             }
         
         return stats;

@@ -25,6 +25,7 @@ interface IMarsGovernance {
         uint256 percentage;
         bool voted;
         bool isWinningOutcome;
+        uint256 proposalId;
     }
 
     function getOutcomes(uint256 _index) external view returns (Proposals.ProposalInfo memory, Proposals.ChangeOutcomeProposal memory);
